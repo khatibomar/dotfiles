@@ -15,7 +15,7 @@ alias la='ls -A'
 alias grep='grep --color=auto'
 alias diff='diff --color=auto'
 alias cat='~/.local/bin/cat.sh'
-
+alias airx='WINEPREFIX="$HOME/.wine32" WINEARCH=win32 MESA_GL_VERSION_OVERRIDE=4.5 wine $HOME/.local/Air_Explorer_Pro_4.0.1_Portable/AirExplorerPortable.exe'
 # vim
 alias v="nvim"
 alias vi="nvim"

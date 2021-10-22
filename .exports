@@ -5,3 +5,7 @@ export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig:/usr/share/pkgconfig:
 
 # add local to path
 export PATH=$HOME/.local/bin:$HOME/.local/share/applications:$PATH
+export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:/usr/local/protobuf/bin
+export PATH=$PATH:/home/omarlap/.cargo/bin
+export PATH=$PATH:/home/omarlap/.node_modules/bin

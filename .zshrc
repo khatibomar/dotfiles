@@ -33,7 +33,8 @@ antigen bundle voronkovich/gitignore.plugin.zsh
 antigen bundle zdharma/zsh-diff-so-fancy
 
 # Let's add a theme! 
-antigen theme amuse 
+antigen bundle sohnryang/lambda-minimal-theme
+antigen theme sohnryang/lambda-minimal-theme
 
 # Use my old bash Aliases
 if [ -f ~/.aliases ]; then
