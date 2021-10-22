@@ -58,7 +58,7 @@ install kitty terminal :
 ```bash
 curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
 ```
-⚠️ the configuration use [Monolisa](http://monolisa.dev/) font either install it or change it in the kitty config file
+⚠️ this installation uses https://github.com/dexpota/kitty-themes , download it
 
 
 install rsync - Arch
