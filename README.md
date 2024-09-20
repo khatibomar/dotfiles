@@ -11,3 +11,9 @@ https://github.com/golang/tools/tree/master/gopls
 ```sh
 ./install.sh
 ```
+
+# Sources
+
+https://github.com/cpow/neovim-for-newbs
+Chatgpt :)
+
