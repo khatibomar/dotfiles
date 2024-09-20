@@ -6,5 +6,3 @@ vim.cmd("set shiftwidth=2")
 -- Enable copy to clipboard
 vim.opt.clipboard:append("unnamedplus")
 
--- Set leader key to space
-vim.g.mapleader = " "
