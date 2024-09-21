@@ -6,3 +6,6 @@ vim.cmd("set shiftwidth=2")
 -- Enable copy to clipboard
 vim.opt.clipboard:append("unnamedplus")
 
+-- Color scheme
+vim.o.termguicolors = true
+vim.cmd [[silent! colorscheme leaf-light]]
