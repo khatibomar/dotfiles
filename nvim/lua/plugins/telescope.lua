@@ -15,11 +15,19 @@ return {
         },
       })
       local builtin = require("telescope.builtin")
+      
+      -- Custom function to show buffers (files opened in the current session)
+      local function session_oldfiles()
+        builtin.buffers({ show_all_buffers = true, sort_mru = true })
+      end
+      
       vim.keymap.set("n", "<C-p>", builtin.find_files, {})
       vim.keymap.set("n", "<leader>fg", builtin.live_grep, {})
-      vim.keymap.set("n", "<leader><leader>", builtin.oldfiles, {})
+      -- Use buffers for session-specific files
+      vim.keymap.set("n", "<leader><leader>", session_oldfiles, {})
 
       require("telescope").load_extension("ui-select")
     end,
   },
 }
+
