@@ -20,7 +20,9 @@ return {
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
       local lspconfig = require("lspconfig")
-      
+
+      local lspconfig = require("lspconfig")
+
       -- Setup for Go language server
       lspconfig.gopls.setup({
         capabilities = capabilities,
@@ -32,6 +34,46 @@ return {
               unusedwrite = true,
             },
             staticcheck = true,
+          },
+        },
+      })
+
+      -- Setup for YAML language server
+      lspconfig.yamlls.setup({
+        capabilities = capabilities,
+        settings = {
+          yaml = {
+            schemas = {
+              kubernetes = "/*.yaml",  -- Example schema
+            },
+            validate = true,
+            hover = true,
+            completion = true,
+          },
+        },
+      })
+
+      -- Setup for Lua language server
+      lspconfig.lua_ls.setup({
+        capabilities = capabilities,
+        settings = {
+          Lua = {
+            runtime = {
+              -- Tell the language server which version of Lua you're using
+              version = 'LuaJIT', -- for Neovim Lua runtime
+            },
+            diagnostics = {
+              -- Enable Neovim-specific globals like 'vim'
+              globals = { 'vim' },
+            },
+            workspace = {
+              -- Make the server aware of Neovim runtime files
+              library = vim.api.nvim_get_runtime_file("", true),
+              checkThirdParty = false,
+            },
+            telemetry = {
+              enable = false,
+            },
           },
         },
       })
