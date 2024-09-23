@@ -6,6 +6,19 @@ return {
     "nvim-telescope/telescope.nvim",
     tag = "0.1.5",
     dependencies = { "nvim-lua/plenary.nvim" },
+    keys = {
+      { "<leader><leader>", "<cmd>Telescope find_files<cr>", desc = "Find Files" }
+    },
+    opts = {
+      defaults = {
+        file_ignore_patterns = { "node_modules" , ".git" },
+        mappings = {
+          i = {
+            ["<C-u>"] = false,
+          }
+        },
+      },
+    },
     config = function()
       require("telescope").setup({
         extensions = {
@@ -14,17 +27,6 @@ return {
           },
         },
       })
-      local builtin = require("telescope.builtin")
-      
-      -- Custom function to show buffers (files opened in the current session)
-      local function session_oldfiles()
-        builtin.buffers({ show_all_buffers = true, sort_mru = true })
-      end
-      
-      vim.keymap.set("n", "<C-p>", builtin.find_files, {})
-      vim.keymap.set("n", "<leader>fg", builtin.live_grep, {})
-      -- Use buffers for session-specific files
-      vim.keymap.set("n", "<leader><leader>", session_oldfiles, {})
 
       require("telescope").load_extension("ui-select")
     end,
