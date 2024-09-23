@@ -7,7 +7,11 @@ return {
     tag = "0.1.5",
     dependencies = { "nvim-lua/plenary.nvim" },
     keys = {
-      { "<leader><leader>", "<cmd>Telescope find_files<cr>", desc = "Find Files" }
+      { "<leader><leader>", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
+      { "<leader>lb", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
+      { "<leader>rf", "<cmd>Telescope oldfiles<cr>", desc = "Recent Files" },
+      { "<leader>/", "<cmd>Telescope current_buffer_fuzzy_find<cr>", desc = "Search in Current Buffer" },
+      { "<leader>lg", "<cmd>Telescope live_grep<cr>", desc = "Search Text in Workspace" },
     },
     opts = {
       defaults = {
