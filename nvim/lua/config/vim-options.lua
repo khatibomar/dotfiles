@@ -24,3 +24,19 @@ vim.cmd([[
   highlight Operator guifg=#737373
   highlight Type guifg=#846C92
 ]])
+
+-- Enable autoread using the new API
+vim.opt.autoread = true
+
+-- Create a new autocmd group for managing changes
+local group = vim.api.nvim_create_augroup("AutoReadGroup", { clear = true })
+
+-- Automatically check for file changes when gaining focus or entering a buffer
+vim.api.nvim_create_autocmd({"FocusGained", "BufEnter"}, {
+  group = group,
+  callback = function()
+    vim.cmd("checktime")  -- Check if files have changed externally
+  end,
+  desc = "Check for file changes on focus or buffer enter",
+})
+
