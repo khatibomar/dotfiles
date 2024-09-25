@@ -27,3 +27,54 @@ else
 fi
 
 echo "Backup and copy completed successfully."
+
+# Path to your custom .gitconfig file
+CUSTOM_GITCONFIG_PATH="./gitconfig"
+
+# Starting message
+echo "Starting to merge custom .gitconfig settings..."
+
+# Variable to track the current section
+current_section=""
+
+# Read the custom gitconfig file line by line
+while IFS= read -r line; do
+    # Skip empty lines and comments (lines starting with #)
+    if [[ -z "$line" || "$line" =~ ^# ]]; then
+        continue
+    fi
+
+    # Check if the line is a section header (e.g., [alias], [user], [color "branch"])
+    if [[ "$line" =~ ^\[(.*)\]$ ]]; then
+        section=$(echo "$line" | sed -E 's/\[([a-zA-Z]+).*/\1/')    # Extract section part (e.g., diff)
+        tag=$(echo "$line" | sed -nE 's/.*\"([^\"]+)\".*/\1/p')     # Extract tag part if present (e.g., branch)
+
+        if [[ -n "$tag" ]]; then
+            current_section="${section}.${tag}"  # Combine section and tag (e.g., color.branch)
+        else
+            current_section="${section}"        # No tag, just use section (e.g., alias, diff)
+        fi
+        continue
+    fi
+
+    # Skip lines that don't match key = value format
+    if [[ ! "$line" =~ = ]]; then
+        continue
+    fi
+
+    # Extract key and value, safely handling quotes and spaces
+    key=$(echo "$line" | cut -d '=' -f 1 | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/\"//g')    # Remove quotes and trim spaces around the key
+    value=$(echo "$line" | cut -d '=' -f 2- | sed 's/^[ \t]*//;s/[ \t]*$//')                 # Trim spaces around the value
+
+    # Combine the section with the key (e.g., alias.co or color.branch.upstream)
+    full_key="${current_section}.${key}"
+
+    # Check if the key already exists in the global .gitconfig
+    if ! git config --global --get "$full_key" > /dev/null; then
+        # If key doesn't exist, set it without printing logs
+        git config --global "$full_key" "$value" > /dev/null 2>&1
+    fi
+done < "$CUSTOM_GITCONFIG_PATH"
+
+echo "Git configuration merged successfully!"
+

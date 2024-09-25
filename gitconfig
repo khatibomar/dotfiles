@@ -1,0 +1,59 @@
+[alias]
+  # List available aliases
+  aliases = !git config --get-regexp alias | sed -re 's/alias\\.(\\S*)\\s(.*)$/\\1 = \\2/g'
+  # Command shortcuts
+  ci = commit
+  co = checkout
+  st = status
+  # Display tree-like log, because default log is a pain…
+  lg1 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)' --all
+  lg2 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold cyan)%aD%C(reset) %C(bold green)(%ar)%C(reset)%C(auto)%d%C(reset)%n''          %C(white)%s%C(reset) %C(dim white)- %an%C(reset)'
+  lg = lg1
+  # Undo last commit but keep changed files in stage
+  uncommit = reset --soft HEAD~1
+  # Remove file(s) from Git but not from disk
+  untrack = rm --cache --
+[user]
+  email = elkhatibomar@outlook.com
+  name = khatibomar
+[core]
+  editor = nvim
+  excludesfile = ~/.gitignore_global
+  whitespace = -trailing-space
+[diff]
+  tool = nvimdiff
+  guitool = nvimdiff
+[difftool]
+  prompt = false
+  guiDefault = false
+[merge]
+  tool = nvimdiff
+  guitool = nvimdiff
+  conflictstyle = diff3
+[mergetool]
+  prompt = false
+  guiDefault = false
+  keepBackup = false
+
+# NOTE: must set "vimdiff" here and NOT "nvimdiff" for custom layout to work
+# But just for this [mergetool "vimdiff"] section.
+# The other [merge] and [mergetool] sections above MUST be set to "nvimdiff"
+[mergetool "vimdiff"]
+  layout = (LOCAL,BASE,REMOTE) / MERGED + (LOCAL,MERGED,REMOTE) + LOCAL,REMOTE + (LOCAL,MERGED) / (REMOTE,MERGED) + (BASE,LOCAL) / (BASE,REMOTE)
+[push]
+  # Default push should only push the current branch to its push target, regardless of its remote name
+  default = upstream
+  # When pushing, also push tags whose commit-ishs are now reachable upstream
+  followTags = true
+[status]
+  # Display submodule rev change summaries in status
+  submoduleSummary = true
+  # Recursively traverse untracked directories to display all contents
+  showUntrackedFiles = all
+[color "branch"]
+  # Blue on black is hard to read in git branch -vv: use cyan instead
+  upstream = cyan
+[tag]
+  # Sort tags as version numbers whenever applicable, so 1.10.2 is AFTER 1.2.0.
+  sort = version:refname
+
