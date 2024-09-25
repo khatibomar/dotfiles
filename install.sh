@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Set the email address for the GPG key
+EMAIL="elkhatibomar@outlook.com"
+
+# Set the paths for the public and private key files
+PUBLIC_GPP_KEY_FILE="github_gpg_public_key.asc"
+PRIVATE_GPG_KEY_FILE="github_gpg_private_key.asc"
+
+# Path to your custom gitconfig file
+CUSTOM_GITCONFIG_PATH="./gitconfig"
+
 # Get the current date and time in the format YYYY-MM-DD_HH-MM-SS
 current_date=$(date +"%Y-%m-%d_%H-%M-%S")
 
@@ -27,9 +37,6 @@ else
 fi
 
 echo "Backup and copy completed successfully."
-
-# Path to your custom gitconfig file
-CUSTOM_GITCONFIG_PATH="./gitconfig"
 
 # Starting message
 echo "Starting to merge custom .gitconfig settings..."
@@ -84,4 +91,34 @@ while IFS= read -r line; do
 done < "$CUSTOM_GITCONFIG_PATH"
 
 echo "Git configuration merged successfully!"
+
+# Function to import GPG keys
+import_gpg_keys() {
+    echo "Importing GPG keys..."
+    
+    # Import the private key
+    gpg --import "$PRIVATE_KEY_FILE"
+    
+    # Import the public key
+    gpg --import "$PUBLIC_KEY_FILE"
+    
+    echo "GPG keys imported successfully."
+}
+
+# Check if a GPG key already exists for the specified email
+if gpg --list-keys "$EMAIL" &> /dev/null; then
+    echo "GPG key already exists for $EMAIL."
+else
+    echo "No GPG key found for $EMAIL. Importing keys..."
+
+    # Check if the public and private key files exist
+    if [[ -f "$PUBLIC_KEY_FILE" && -f "$PRIVATE_KEY_FILE" ]]; then
+        import_gpg_keys
+    else
+        echo "Public or private key file not found. Please ensure the keys exist at specified paths."
+        exit 1
+    fi
+
+    echo "Done GPG key imported"
+fi
 
