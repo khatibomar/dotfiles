@@ -28,7 +28,7 @@ fi
 
 echo "Backup and copy completed successfully."
 
-# Path to your custom .gitconfig file
+# Path to your custom gitconfig file
 CUSTOM_GITCONFIG_PATH="./gitconfig"
 
 # Starting message
@@ -65,13 +65,13 @@ while IFS= read -r line; do
     # Trim leading and trailing whitespace from the line
     line=$(echo "$line" | awk '{$1=$1;print}')  # Using awk to trim whitespace
 
-    # Extract key and value
+    # Extract key and value, preserving quotes
     key="${line%%=*}"  # Get the part before the '='
     value="${line#*=}" # Get the part after the '='
-    
+
     # Further trim whitespace from key and value
-    key=$(echo "$key" | sed 's/\"//g' | xargs)    # Remove quotes from key and trim spaces
-    value=$(echo "$value" | xargs)  # Trim spaces around the value
+    key=$(echo "$key" | sed 's/[ \t]*//g')    # Trim spaces around the key
+    value=$(echo "$value" | sed 's/^[ \t]*//;s/[ \t]*$//')  # Trim spaces around the value
 
     # Combine the section with the key (e.g., alias.co or color.branch.upstream)
     full_key="${current_section}.${key}"
