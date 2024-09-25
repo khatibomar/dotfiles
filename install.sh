@@ -4,8 +4,8 @@
 EMAIL="elkhatibomar@outlook.com"
 
 # Set the paths for the public and private key files
-PUBLIC_GPP_KEY_FILE="github_gpg_public_key.asc"
-PRIVATE_GPG_KEY_FILE="github_gpg_private_key.asc"
+PUBLIC_GPP_KEY_FILE="./keys/github_gpg_public_key.asc"
+PRIVATE_GPG_KEY_FILE="./keys/github_gpg_private_key.asc"
 
 # Path to your custom gitconfig file
 CUSTOM_GITCONFIG_PATH="./gitconfig"
@@ -92,16 +92,10 @@ done < "$CUSTOM_GITCONFIG_PATH"
 
 echo "Git configuration merged successfully!"
 
-# Function to import GPG keys
 import_gpg_keys() {
     echo "Importing GPG keys..."
-    
-    # Import the private key
     gpg --import "$PRIVATE_KEY_FILE"
-    
-    # Import the public key
     gpg --import "$PUBLIC_KEY_FILE"
-    
     echo "GPG keys imported successfully."
 }
 
