@@ -46,13 +46,13 @@ while IFS= read -r line; do
 
     # Check if the line is a section header (e.g., [alias], [user], [color "branch"])
     if [[ "$line" =~ ^\[(.*)\]$ ]]; then
-        section=$(echo "$line" | sed -E 's/\[([a-zA-Z]+).*/\1/')    # Extract section part (e.g., diff)
-        tag=$(echo "$line" | sed -nE 's/.*\"([^\"]+)\".*/\1/p')     # Extract tag part if present (e.g., branch)
+        section=$(echo "$line" | sed -E 's/\[([a-zA-Z0-9_-]+).*/\1/')    # Extract section part
+        tag=$(echo "$line" | sed -nE 's/.*\"([^\"]+)\".*/\1/p')          # Extract tag part if present
 
         if [[ -n "$tag" ]]; then
-            current_section="${section}.${tag}"  # Combine section and tag (e.g., color.branch)
+            current_section="${section}.${tag}"  # Combine section and tag
         else
-            current_section="${section}"        # No tag, just use section (e.g., alias, diff)
+            current_section="${section}"        # No tag, just use section
         fi
         continue
     fi
@@ -62,9 +62,16 @@ while IFS= read -r line; do
         continue
     fi
 
-    # Extract key and value, safely handling quotes and spaces
-    key=$(echo "$line" | cut -d '=' -f 1 | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/\"//g')    # Remove quotes and trim spaces around the key
-    value=$(echo "$line" | cut -d '=' -f 2- | sed 's/^[ \t]*//;s/[ \t]*$//')                 # Trim spaces around the value
+    # Trim leading and trailing whitespace from the line
+    line=$(echo "$line" | awk '{$1=$1;print}')  # Using awk to trim whitespace
+
+    # Extract key and value
+    key="${line%%=*}"  # Get the part before the '='
+    value="${line#*=}" # Get the part after the '='
+    
+    # Further trim whitespace from key and value
+    key=$(echo "$key" | sed 's/\"//g' | xargs)    # Remove quotes from key and trim spaces
+    value=$(echo "$value" | xargs)  # Trim spaces around the value
 
     # Combine the section with the key (e.g., alias.co or color.branch.upstream)
     full_key="${current_section}.${key}"

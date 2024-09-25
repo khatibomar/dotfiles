@@ -16,6 +16,9 @@
 [user]
   email = elkhatibomar@outlook.com
   name = khatibomar
+  signingkey = 023BC121E6D0ADEF
+[commit]
+  gpgsign = true
 [core]
   editor = nvim
   excludesfile = ~/.gitignore_global
