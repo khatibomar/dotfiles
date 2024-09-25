@@ -40,3 +40,11 @@ vim.api.nvim_create_autocmd({"FocusGained", "BufEnter"}, {
   desc = "Check for file changes on focus or buffer enter",
 })
 
+-- Check if diff mode is enabled
+if vim.opt.diff:get() then
+	-- Define key mappings for diff mode
+	vim.api.nvim_set_keymap("n", "<localleader>1", ":diffget LOCAL<CR>", { noremap = true, silent = true })
+	vim.api.nvim_set_keymap("n", "<localleader>2", ":diffget BASE<CR>", { noremap = true, silent = true })
+	vim.api.nvim_set_keymap("n", "<localleader>3", ":diffget REMOTE<CR>", { noremap = true, silent = true })
+end
+
