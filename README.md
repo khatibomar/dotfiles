@@ -8,8 +8,11 @@ dotfiles for my linux and mac
 
 # Tools used
 
+https://github.com/livegrep/livegrep <br/>
 https://github.com/golangci/golangci-lint <br/>
 https://github.com/golang/tools/tree/master/gopls <br/>
+https://nodejs.org/en/download/package-manager <br/>
+https://github.com/bash-lsp/bash-language-server <br/>
 
 # Install
 
