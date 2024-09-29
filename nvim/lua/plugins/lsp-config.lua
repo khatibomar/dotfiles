@@ -78,6 +78,19 @@ return {
         },
       })
 
+      -- Setup for Bash language server
+      lspconfig.bashls.setup({
+        capabilities = capabilities,
+        settings = {
+          bash = {
+            enable = true,
+            linting = true,
+            shellcheck = { enable = true },
+            globPattern = "*@(.sh|.inc|.bash|.command)",  
+          },
+        },
+      })
+
       -- Keymaps for LSP functionality
       vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
       vim.keymap.set("n", "<leader>gd", vim.lsp.buf.definition, {})
