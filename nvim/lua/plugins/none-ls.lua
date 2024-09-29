@@ -13,12 +13,18 @@ return {
 
         -- Go linting
         null_ls.builtins.diagnostics.golangci_lint.with({
-            command = "golangci-lint", -- adjust the command path if necessary
+          command = "golangci-lint", -- adjust the command path if necessary
         }),
+
+        -- Bash support
+        null_ls.builtins.formatting.shfmt,      -- for Bash formatting
+        null_ls.builtins.diagnostics.shellcheck -- for Bash linting
       },
     })
 
     vim.keymap.set("n", "<leader>gf", vim.lsp.buf.format, {})
-    vim.cmd([[autocmd BufWritePre *.go lua vim.lsp.buf.format()]])
+    vim.cmd([[autocmd BufWritePre *.go,*.sh lua vim.lsp.buf.format()]])
   end,
 }
+
+
