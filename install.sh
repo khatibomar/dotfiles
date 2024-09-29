@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # Navigate to the scripts folder
 SCRIPT_DIR="$(dirname "$0")/scripts"
 
