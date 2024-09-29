@@ -2,6 +2,8 @@ vim.cmd([[
     set number
     set relativenumber
     set expandtab
+    set cursorline
+
     set tabstop=2
     set softtabstop=2
     set shiftwidth=2
