@@ -1,19 +1,19 @@
-#function ttmux {
-#  if (pgrep tmux); then
-#    tmux attach
-#  else 
-#    tmux
-#  fi
-#  builtin exit
-#}
-#
-#function exit {
-#  if [ ${TMUX} ]; then
-#      tmux detach
-#  else 
-#      builtin exit
-#  fi
-#}
+function ttmux {
+  if (pgrep tmux); then
+    tmux attach
+  else 
+    tmux
+  fi
+  builtin exit
+}
+
+function exit {
+  if [ ${TMUX} ]; then
+      tmux detach
+  else 
+      builtin exit
+  fi
+}
 
 ZSH_THEME="lambda"
 plugins=(git)
@@ -23,7 +23,7 @@ source $HOME/.export
 source $ZSH/oh-my-zsh.sh
 
 # Start ttmux if not already inside a tmux session
-#if [ -z "$TMUX" ]; then
-#    exec ttmux
-#fi
+if [ -z "$TMUX" ]; then
+    exec ttmux
+fi
 
