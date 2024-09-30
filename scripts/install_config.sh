@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("gitconfig" "alacritty.yml")
+EXCLUDED_FILES=("gitconfig" "alacritty.toml")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -51,12 +51,12 @@ else
   exit 1
 fi
 
-  # Handle alacritty.yml separately
-  if [ -f "$CONFIG_DIR/alacritty.yml" ]; then
+  # Handle alacritty.toml separately
+  if [ -f "$CONFIG_DIR/alacritty.toml" ]; then
     ALACRITTY_DIR="$HOME/.config/alacritty"
     mkdir -p "$ALACRITTY_DIR"  # Create the alacritty directory if it doesn't exist
-    echo "Copying alacritty.yml to $ALACRITTY_DIR/alacritty.yml"
-    cp "$CONFIG_DIR/alacritty.yml" "$ALACRITTY_DIR/alacritty.yml"
+    echo "Copying alacritty.toml to $ALACRITTY_DIR/alacritty.toml"
+    cp "$CONFIG_DIR/alacritty.toml" "$ALACRITTY_DIR/alacritty.toml"
   fi
 else
   echo "Error: Config directory $CONFIG_DIR does not exist."

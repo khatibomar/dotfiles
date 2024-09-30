@@ -1,0 +1,73 @@
+[font]
+  [font.normal]
+    family = "Fira Code Nerd Font"
+    style = "Regular"
+  [font.bold]
+    family = "Fira Code Nerd Font"
+  [font.italic]
+    family = "Fira Code Nerd Font"
+  size = 14
+
+[colors]
+  [colors.primary]
+    foreground = '#2B3C2B'
+    background = '#C8E3C8'
+  [colors.cursor]
+    text = '#C8E3C8'
+    cursor = '#524f67'
+  [colors.vi_mode_cursor]
+    text = '#C8E3C8'
+    cursor = '#524f67'
+  [colors.search]
+    [colors.search.matches]
+      foreground = '#A3B8A3'
+      background = '#D7E8D7'
+    [colors.search.focused_match]
+      foreground = '#191724'
+      background = '#ebbcba'
+  [colors.hints]
+    [colors.hints.start]
+      foreground = '#908caa'
+      background = '#1f1d2e'
+    [colors.hints.end]
+      foreground = '#6e6a86'
+      background = '#1f1d2e'
+  [colors.line_indicator]
+    foreground = 'None'
+    background = 'None'
+  [colors.footer_bar]
+    foreground = '#2B3C2B'
+    background = '#1f1d2e'
+  [colors.selection]
+    text = '#C8E3C8'
+    background = '#403d52'
+  [colors.normal]
+    black = '#26233a'
+    red = '#D48A8A'
+    green = '#4CAF50'
+    yellow = '#D4C054'
+    blue = '#6F9BC4'
+    magenta = '#A47DAB'
+    cyan = '#ebbcba'
+    white = '#C8E3C8'
+  [colors.bright]
+    black = '#6e6a86'
+    red = '#D48A8A'
+    green = '#4CAF50'
+    yellow = '#D4C054'
+    blue = '#6F9BC4'
+    magenta = '#A47DAB'
+    cyan = '#ebbcba'
+    white = '#C8E3C8'
+  [colors.dim]
+    black = '#6e6a86'
+    red = '#D48A8A'
+    green = '#31748f'
+    yellow = '#D4C054'
+    blue = '#9ccfd8'
+    magenta = '#c4a7e7'
+    cyan = '#ebbcba'
+    white = '#C8E3C8'
+
+live_config_reload = true
+
