@@ -11,6 +11,8 @@ return {
         -- Specify which parsers to ensure are installed
         ensure_installed = {
           "go",         -- Go language parser
+          "lua",   -- Lua language parser
+          "bash",  -- Bash language parser
         },
 
         -- Enable syntax highlighting using Treesitter
