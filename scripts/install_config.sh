@@ -51,17 +51,15 @@ else
   exit 1
 fi
 
-  # Handle alacritty.toml separately
-  if [ -f "$CONFIG_DIR/alacritty.toml" ]; then
-    ALACRITTY_DIR="$HOME/.config/alacritty"
-    mkdir -p "$ALACRITTY_DIR"  # Create the alacritty directory if it doesn't exist
-    echo "Copying alacritty.toml to $ALACRITTY_DIR/alacritty.toml"
-    cp "$CONFIG_DIR/alacritty.toml" "$ALACRITTY_DIR/alacritty.toml"
-  fi
+# Handle alacritty.toml separately
+if [ -f "$CONFIG_DIR/alacritty.toml" ]; then
+  ALACRITTY_DIR="$HOME/.config/alacritty"
+  mkdir -p "$ALACRITTY_DIR" # Create the alacritty directory if it doesn't exist
+  echo "Copying alacritty.toml to $ALACRITTY_DIR/alacritty.toml"
+  cp "$CONFIG_DIR/alacritty.toml" "$ALACRITTY_DIR/alacritty.toml"
 else
   echo "Error: Config directory $CONFIG_DIR does not exist."
   exit 1
 fi
-
 
 echo "Backup and copy for general config completed successfully."
