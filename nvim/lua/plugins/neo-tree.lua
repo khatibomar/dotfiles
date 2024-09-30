@@ -15,7 +15,7 @@ return {
           hide_by_name = { "node_modules", ".DS_Store" },
           always_show = { ".gitignore" },
         },
-        follow_current_file = true,
+        follow_current_file = { enabled = true },  -- Updated line
         hijack_netrw_behavior = "open_current",
       },
       window = {
