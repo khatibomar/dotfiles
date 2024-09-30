@@ -21,6 +21,7 @@ plugins=(git)
 source $HOME/.alias
 source $HOME/.export
 source $ZSH/oh-my-zsh.sh
+[ -f $HOME/.fzf.zsh ] && $HOME/.fzf.zsh
 
 # Start ttmux if not already inside a tmux session
 if [ -z "$TMUX" ]; then

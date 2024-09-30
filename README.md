@@ -8,7 +8,11 @@ dotfiles for my linux and mac
 
 # Tools used
 
+https://ohmyz.sh/ <br/>
+https://github.com/junegunn/fzf <br/>
 https://github.com/livegrep/livegrep <br/>
+https://github.com/lsd-rs/lsd <br/>
+https://github.com/sharkdp/bat <br/>
 https://github.com/golangci/golangci-lint <br/>
 https://github.com/golang/tools/tree/master/gopls <br/>
 https://nodejs.org/en/download/package-manager <br/>
