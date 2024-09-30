@@ -25,6 +25,9 @@ vim.cmd([[
   highlight Boolean guifg=#A75E5E
   highlight Operator guifg=#737373
   highlight Type guifg=#846C92
+  highlight Cursor guifg=#C8E3C8 guibg=#191724
+  highlight CursorLine guibg=#B1D2B1
+  highlight CursorColumn guibg=#B1D2B1
 ]])
 
 -- Enable autoread using the new API
