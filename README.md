@@ -8,6 +8,7 @@ dotfiles for my linux and mac
 
 # Tools used
 
+https://luarocks.org/ <br/>
 https://ohmyz.sh/ <br/>
 https://github.com/junegunn/fzf <br/>
 https://github.com/livegrep/livegrep <br/>
