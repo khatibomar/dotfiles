@@ -8,6 +8,7 @@ dotfiles for my linux and mac
 
 # Tools used
 
+https://github.com/jimeh/tmuxifier.git <br/>
 https://luarocks.org/ <br/>
 https://ohmyz.sh/ <br/>
 https://github.com/junegunn/fzf <br/>

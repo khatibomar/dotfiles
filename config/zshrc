@@ -7,3 +7,8 @@ source $ZSH/oh-my-zsh.sh
 [ -f $HOME/.fzf.zsh ] && $HOME/.fzf.zsh
 
 source $HOME/.alias
+
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  
+
+eval "$(tmuxifier init -)"
