@@ -17,9 +17,7 @@ return {
     "neovim/nvim-lspconfig",
     lazy = false,
     config = function()
-      local capabilities = require('cmp_nvim_lsp').default_capabilities()
-
-      local lspconfig = require("lspconfig")
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
       local lspconfig = require("lspconfig")
 
@@ -41,11 +39,27 @@ return {
       -- Setup for YAML language server
       lspconfig.yamlls.setup({
         capabilities = capabilities,
+        on_attach = function(client, bufnr)
+          -- Check if the current buffer is a codegen.yaml or codegen.yml
+          local filename = vim.fn.expand("%:t")
+          local schema_path = vim.fn.expand("%:p:h") .. "/.schema.json" -- Full path to .schema.json
+
+          if filename == "codegen.yaml" or filename == "codegen.yml" then
+            -- Ensure the schema file exists before adding it
+            if vim.fn.filereadable(schema_path) == 1 then
+              client.config.settings.yaml.schemas[schema_path] = { "codegen.yaml", "codegen.yml" }
+              client.notify("workspace/didChangeConfiguration", { settings = client.config.settings })
+              vim.notify("Loaded schema from " .. schema_path)
+            end
+          end
+        end,
         settings = {
           yaml = {
-            schemas = {
-              kubernetes = "/*.yaml",  -- Example schema
+            schemaStore = {
+              enable = false,
+              url = "",
             },
+            schemas = {},
             validate = true,
             hover = true,
             completion = true,
@@ -60,11 +74,11 @@ return {
           Lua = {
             runtime = {
               -- Tell the language server which version of Lua you're using
-              version = 'LuaJIT', -- for Neovim Lua runtime
+              version = "LuaJIT", -- for Neovim Lua runtime
             },
             diagnostics = {
               -- Enable Neovim-specific globals like 'vim'
-              globals = { 'vim' },
+              globals = { "vim" },
             },
             workspace = {
               -- Make the server aware of Neovim runtime files
@@ -86,7 +100,7 @@ return {
             enable = true,
             linting = true,
             shellcheck = { enable = true },
-            globPattern = "*@(.sh|.inc|.bash|.command)",  
+            globPattern = "*@(.sh|.inc|.bash|.command)",
           },
         },
       })
