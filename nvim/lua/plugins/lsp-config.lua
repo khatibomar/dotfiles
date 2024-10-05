@@ -42,14 +42,14 @@ return {
         on_attach = function(client, bufnr)
           -- Check if the current buffer is a codegen.yaml or codegen.yml
           local filename = vim.fn.expand("%:t")
-          local schema_path = vim.fn.expand("%:p:h") .. "/.schema.json" -- Full path to .schema.json
 
           if filename == "codegen.yaml" or filename == "codegen.yml" then
+            local codegen_schema_path = vim.fn.expand("%:p:h") .. "/.schema.json"
             -- Ensure the schema file exists before adding it
-            if vim.fn.filereadable(schema_path) == 1 then
-              client.config.settings.yaml.schemas[schema_path] = { "codegen.yaml", "codegen.yml" }
+            if vim.fn.filereadable(codegen_schema_path) == 1 then
+              client.config.settings.yaml.schemas[codegen_schema_path] = { "codegen.yaml", "codegen.yml" }
               client.notify("workspace/didChangeConfiguration", { settings = client.config.settings })
-              vim.notify("Loaded schema from " .. schema_path)
+              vim.notify("Loaded schema from " .. codegen_schema_path)
             end
           end
         end,
