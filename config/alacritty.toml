@@ -8,64 +8,44 @@
   [font.italic]
     family = "FiraCode Nerd Font"
 
+# Alacritty configuration file
+
+# Colors
 [colors]
+  # Default colors
   [colors.primary]
-    foreground = '#2B3C2B'
-    background = '#C8E3C8'
+    background = '#C8E3C8' # Background color
+    foreground = '#3E3E3E' # Foreground color (text)
+
+  # Cursor colors
   [colors.cursor]
-    text = '#C8E3C8'
-    cursor = '#524f67'
-  [colors.vi_mode_cursor]
-    text = '#C8E3C8'
-    cursor = '#524f67'
-  [colors.search]
-    [colors.search.matches]
-      foreground = '#A3B8A3'
-      background = '#D7E8D7'
-    [colors.search.focused_match]
-      foreground = '#191724'
-      background = '#ebbcba'
-  [colors.hints]
-    [colors.hints.start]
-      foreground = '#908caa'
-      background = '#1f1d2e'
-    [colors.hints.end]
-      foreground = '#6e6a86'
-      background = '#1f1d2e'
-  [colors.line_indicator]
-    foreground = 'None'
-    background = 'None'
-  [colors.footer_bar]
-    foreground = '#2B3C2B'
-    background = '#1f1d2e'
-  [colors.selection]
-    text = '#C8E3C8'
-    background = '#403d52'
+    cursor = '#3E3E3E'       # Cursor color
+
+  # Normal colors
   [colors.normal]
-    black = '#26233a'
-    red = '#D48A8A'
-    green = '#4CAF50'
-    yellow = '#D4C054'
-    blue = '#6F9BC4'
-    magenta = '#A47DAB'
-    cyan = '#ebbcba'
-    white = '#C8E3C8'
+    black = '#3E3E3E'
+    red = '#D74D3E'
+    green = '#5C8F5C'
+    yellow = '#D7C64E'
+    blue = '#6F4C93'
+    magenta = '#A65E9E'
+    cyan = '#4D9FC5'
+    white = '#E5E5E5'
+
+  # Bright colors
   [colors.bright]
-    black = '#6e6a86'
-    red = '#D48A8A'
-    green = '#4CAF50'
-    yellow = '#D4C054'
-    blue = '#6F9BC4'
-    magenta = '#A47DAB'
-    cyan = '#ebbcba'
-    white = '#C8E3C8'
-  [colors.dim]
-    black = '#6e6a86'
-    red = '#D48A8A'
-    green = '#31748f'
-    yellow = '#D4C054'
-    blue = '#9ccfd8'
-    magenta = '#c4a7e7'
-    cyan = '#ebbcba'
-    white = '#C8E3C8'
+    black = '#A0A0A0'
+    red = '#FF5D5D'
+    green = '#77FF77'
+    yellow = '#FFFF6D'
+    blue = '#6F77FF'
+    magenta = '#DCA5E5'
+    cyan = '#7DDBDB'
+    white = '#FFFFFF'
+
+# Window settings
+[window]
+  [window.padding]
+    x = 10
+    y = 10
 
