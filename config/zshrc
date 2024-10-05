@@ -4,7 +4,7 @@ plugins=(git)
 source $HOME/.export
 
 source $ZSH/oh-my-zsh.sh
-[ -f $HOME/.fzf.zsh ] && $HOME/.fzf.zsh
+[ -f $HOME/.fzf.zsh ] && source $HOME/.fzf.zsh
 
 source $HOME/.alias
 
