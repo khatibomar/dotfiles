@@ -4,8 +4,7 @@ plugins=(git)
 source $HOME/.export
 
 source $ZSH/oh-my-zsh.sh
-[ -f $HOME/.fzf.zsh ] && $HOME/.fzf.zsh
-
+source <(fzf --zsh)
 source $HOME/.alias
 
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
