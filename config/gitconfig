@@ -2,9 +2,9 @@
   # List available aliases
   aliases = !git config --get-regexp alias | sed -re 's/alias\\.(\\S*)\\s(.*)$/\\1 = \\2/g'
   # Command shortcuts
-  ci = commit
+  ci = commit -p
   co = checkout
-  st = status
+  st = status -s
   # Display tree-like log, because default log is a pain…
   lg1 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)' --all
   lg2 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold cyan)%aD%C(reset) %C(bold green)(%ar)%C(reset)%C(auto)%d%C(reset)%n''          %C(white)%s%C(reset) %C(dim white)- %an%C(reset)'
@@ -13,6 +13,13 @@
   uncommit = reset --soft HEAD~1
   # Remove file(s) from Git but not from disk
   untrack = rm --cache --
+  # Simple simple but really efficient to minimize the size of a diff. It uses color to inline the differences.
+  wdiff = diff --word-diff
+  # This one is also usefule to run merge test before merge to check for any conflicts.
+  mergetest = "!f(){ git merge --no-commit --no-ff \"$1\"; git merge --abort; echo \"Merge aborted\"; };f "
+  # branch delete: This checks out your local master branch and deletes all local branches
+  #                that have already been merged to master
+  brd = !sh -c \"git checkout master && git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d\"
 [user]
   email = elkhatibomar@outlook.com
   name = khatibomar
