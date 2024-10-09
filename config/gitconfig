@@ -15,11 +15,6 @@
   untrack = rm --cache --
   # Simple simple but really efficient to minimize the size of a diff. It uses color to inline the differences.
   wdiff = diff --word-diff
-  # This one is also usefule to run merge test before merge to check for any conflicts.
-  mergetest = "!f(){ git merge --no-commit --no-ff \"$1\"; git merge --abort; echo \"Merge aborted\"; };f "
-  # branch delete: This checks out your local master branch and deletes all local branches
-  #                that have already been merged to master
-  brd = !sh -c \"git checkout master && git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d\"
 [user]
   email = elkhatibomar@outlook.com
   name = khatibomar
