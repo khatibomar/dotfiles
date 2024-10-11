@@ -30,18 +30,18 @@
     blue = '#6F4C93'
     magenta = '#A65E9E'
     cyan = '#4D9FC5'
-    white = '#E5E5E5'
+    white = '#4B8A4B'  # Dark greenish color for better visibility
 
   # Bright colors
   [colors.bright]
     black = '#A0A0A0'
-    red = '#FF5D5D'
-    green = '#77FF77'
-    yellow = '#FFFF6D'
-    blue = '#6F77FF'
-    magenta = '#DCA5E5'
-    cyan = '#7DDBDB'
-    white = '#FFFFFF'
+    red = '#FF4A4A'    # Darker red for better visibility
+    green = '#66CC66'   # Softer green for better visibility
+    yellow = '#C6C24E'  # Darker yellow for better visibility
+    blue = '#5A67D8'    # Softer blue for better visibility
+    magenta = '#DFA5E5' # Softer magenta for better visibility
+    cyan = '#6DD5D5'    # Softer cyan for better visibility
+    white = '#B0C5B0'   # Lighter greenish gray for better visibility
 
 # Window settings
 [window]
