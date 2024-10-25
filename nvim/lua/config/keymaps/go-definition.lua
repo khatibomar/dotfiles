@@ -1,15 +1,12 @@
--- Ensure vertical splits open to the right
-vim.o.splitright = true
+-- Store the original tab and a list of spawned tabs
+local original_tab = nil
+local spawned_tabs = {}
 
--- Store the original window and a list of spawned windows
-local original_window = nil
-local spawned_windows = {}
-
--- Function to go to definition in a vertical split
-local function go_to_definition_split()
-  -- Store the original window
-  if not original_window then
-    original_window = vim.api.nvim_get_current_win()
+-- Function to go to definition in a new tab
+local function go_to_definition_tab()
+  -- Store the original tab page if it hasn't been set
+  if not original_tab then
+    original_tab = vim.api.nvim_get_current_tabpage()
   end
 
   local params = vim.lsp.util.make_position_params()
@@ -19,12 +16,12 @@ local function go_to_definition_split()
       return
     end
 
-    -- Open a new vertical split
-    vim.cmd("vsplit")
+    -- Open a new tab
+    vim.cmd("tabnew")
 
-    -- Get the new window ID
-    local new_window = vim.api.nvim_get_current_win()
-    table.insert(spawned_windows, new_window)
+    -- Track the new tab ID
+    local new_tab = vim.api.nvim_get_current_tabpage()
+    table.insert(spawned_tabs, new_tab)
 
     -- Jump to the first valid location
     for _, loc in ipairs(result) do
@@ -34,34 +31,36 @@ local function go_to_definition_split()
       end
     end
 
-    -- Close the split if no valid location is found
+    -- Close the tab if no valid location is found
     vim.notify("No valid definition location found.")
-    vim.cmd("quit")
+    vim.cmd("tabclose")
   end)
 end
 
--- Function to close all spawned splits and return to the original window
-local function close_splits_and_return()
-  -- Close each spawned window if it's valid
-  for _, win in ipairs(spawned_windows) do
-    if vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_close(win, false)
+-- Function to close all spawned tabs and return to the original tab
+local function close_tabs_and_return()
+  -- Close each spawned tab
+  for _, tab in ipairs(spawned_tabs) do
+    if vim.api.nvim_tabpage_is_valid(tab) then
+      vim.api.nvim_set_current_tabpage(tab)  -- Switch to the tab
+      vim.cmd("tabclose")  -- Close the current tab
     end
   end
 
-  -- Switch back to the original window if it's valid
-  if original_window and vim.api.nvim_win_is_valid(original_window) then
-    vim.api.nvim_set_current_win(original_window)
+  -- Return to the original tab if it's valid
+  if original_tab and vim.api.nvim_tabpage_is_valid(original_tab) then
+    vim.api.nvim_set_current_tabpage(original_tab)
   end
 
-  -- Reset the original window and spawned windows
-  original_window = nil
-  spawned_windows = {}
+  -- Reset the original tab and spawned tabs
+  original_tab = nil
+  spawned_tabs = {}
   vim.cmd('redraw')
 end
 
--- Keymap to go to definition in a vertical split
-vim.keymap.set("n", "gd", go_to_definition_split, { noremap = true, silent = true })
+-- Keymap to go to definition in a new tab
+vim.keymap.set("n", "gd", go_to_definition_tab, { noremap = true, silent = true })
 
--- Keymap to close all splits and return to the original buffer
-vim.keymap.set("n", "<leader>q", close_splits_and_return, { noremap = true, silent = true })
+-- Keymap to close all tabs and return to the original tab
+vim.keymap.set("n", "<leader>q", close_tabs_and_return, { noremap = true, silent = true })
+
