@@ -1,3 +1,14 @@
+local fn = vim.fn
+
+local function buildTags()
+  local cwd = fn.getcwd()
+  if string.find(cwd, "repositories") then
+      return { "-tags=build integration && !unit" }
+  end
+
+  return { "-tags=" }
+end
+
 return {
   {
     "williamboman/mason.nvim",
@@ -26,6 +37,7 @@ return {
         capabilities = capabilities,
         settings = {
           gopls = {
+            buildFlags = buildTags(),
             analyses = {
               unusedparams = true,
               nilness = true,
