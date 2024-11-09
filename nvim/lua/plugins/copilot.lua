@@ -28,6 +28,9 @@ return {
 		end,
 	},
 	{
+		"github/copilot.vim",
+	},
+	{
 		"folke/which-key.nvim",
 		optional = true,
 		opts = {
