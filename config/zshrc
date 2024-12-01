@@ -1,9 +1,11 @@
+[ -f ~/.pvotal.exports.inc ] && source ~/.pvotal.exports.inc
 ZSH_THEME="lambda"
 plugins=(git)
 
 source $HOME/.export
 
 source $ZSH/oh-my-zsh.sh
+[ -f ~/.pvotal.zsh.inc ] && source ~/.pvotal.zsh.inc
 [ -f $HOME/.fzf.zsh ] && source $HOME/.fzf.zsh
 
 source $HOME/.alias
