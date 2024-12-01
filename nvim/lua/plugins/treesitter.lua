@@ -1,32 +1,34 @@
 return {
-  {
-    "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate",
-    config = function()
-      local config = require("nvim-treesitter.configs")
-      config.setup({
-        -- Enable automatic installation of language parsers
-        auto_install = true,
+	{
+		"nvim-treesitter/nvim-treesitter",
+		build = ":TSUpdate",
+		config = function()
+			local config = require("nvim-treesitter.configs")
+			config.setup({
+				ignore_install = {},
+				-- Enable automatic installation of language parsers
+				auto_install = true,
+				sync_install = false,
 
-        -- Specify which parsers to ensure are installed
-        ensure_installed = {
-          "go",         -- Go language parser
-          "lua",   -- Lua language parser
-          "bash",  -- Bash language parser
-        },
+				-- Specify which parsers to ensure are installed
+				ensure_installed = {
+					"go",
+					"lua",
+					"bash",
+					"cpp",
+				},
 
-        -- Enable syntax highlighting using Treesitter
-        highlight = {
-          enable = true,               -- Enable Treesitter-based highlighting
-          additional_vim_regex_highlighting = false,
-        },
+				-- Enable syntax highlighting using Treesitter
+				highlight = {
+					enable = true, -- Enable Treesitter-based highlighting
+					additional_vim_regex_highlighting = false,
+				},
 
-        -- Enable indentation based on Treesitter parsing
-        indent = {
-          enable = true,
-        },
-      })
-    end
-  }
+				-- Enable indentation based on Treesitter parsing
+				indent = {
+					enable = true,
+				},
+			})
+		end,
+	},
 }
-
