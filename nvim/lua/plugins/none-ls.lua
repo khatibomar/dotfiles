@@ -13,11 +13,7 @@ return {
         null_ls.builtins.code_actions.impl,
         null_ls.builtins.diagnostics.golangci_lint,
         null_ls.builtins.diagnostics.staticcheck,
-
-        -- Go imports with gopls
-        null_ls.builtins.formatting.goimports.with({
-          command = "gopls",  -- Ensure gopls is handling the imports
-        }),
+        null_ls.builtins.formatting.goimports_reviser,
 
         -- Bash support
         null_ls.builtins.formatting.shfmt,   -- for Bash formatting
@@ -27,7 +23,6 @@ return {
 
     -- Automatically format and fix imports on save for Go files
     vim.cmd([[autocmd BufWritePre *.go lua vim.lsp.buf.format()]])
-    
     vim.keymap.set("n", "<leader>gf", vim.lsp.buf.format, {})
   end,
 }
