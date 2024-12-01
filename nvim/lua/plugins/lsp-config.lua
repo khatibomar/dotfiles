@@ -3,7 +3,7 @@ local fn = vim.fn
 local function buildTags()
   local cwd = fn.getcwd()
   if string.find(cwd, "repositories") then
-      return { "-tags=build integration && !unit" }
+    return { "-tags=build integration && !unit" }
   end
 
   return { "-tags=" }
@@ -38,12 +38,6 @@ return {
         settings = {
           gopls = {
             buildFlags = buildTags(),
-            analyses = {
-              unusedparams = true,
-              nilness = true,
-              unusedwrite = true,
-            },
-            staticcheck = true,
           },
         },
       })
@@ -51,7 +45,7 @@ return {
       -- Setup for YAML language server
       lspconfig.yamlls.setup({
         capabilities = capabilities,
-        on_attach = function(client, bufnr)
+        on_attach = function(client, _)
           -- Check if the current buffer is a codegen.yaml or codegen.yml
           local filename = vim.fn.expand("%:t")
 

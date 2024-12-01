@@ -1,28 +1,34 @@
 return {
-	"nvimtools/none-ls.nvim",
-	config = function()
-		local null_ls = require("null-ls")
-		null_ls.setup({
-			sources = {
-				-- Lua formatting
-				null_ls.builtins.formatting.stylua,
+  "nvimtools/none-ls.nvim",
+  config = function()
+    local null_ls = require("null-ls")
+    null_ls.setup({
+      sources = {
+        -- Lua formatting
+        null_ls.builtins.formatting.stylua,
 
-				-- Go formatting
-				null_ls.builtins.formatting.gofmt, -- for formatting with gofmt
-				null_ls.builtins.formatting.goimports, -- for formatting with goimports
+        -- Go support with gopls for imports, formatting, and code actions
+        null_ls.builtins.formatting.gofumpt,
+        null_ls.builtins.code_actions.gomodifytags,
+        null_ls.builtins.code_actions.impl,
+        null_ls.builtins.diagnostics.golangci_lint,
+        null_ls.builtins.diagnostics.staticcheck,
 
-				-- Go linting
-				null_ls.builtins.diagnostics.golangci_lint.with({
-					command = "golangci-lint", -- adjust the command path if necessary
-				}),
+        -- Go imports with gopls
+        null_ls.builtins.formatting.goimports.with({
+          command = "gopls",  -- Ensure gopls is handling the imports
+        }),
 
-				-- Bash support
-				null_ls.builtins.formatting.shfmt, -- for Bash formatting
-				null_ls.builtins.diagnostics.shellcheck, -- for Bash linting
-			},
-		})
+        -- Bash support
+        null_ls.builtins.formatting.shfmt,   -- for Bash formatting
+        null_ls.builtins.diagnostics.shellcheck, -- for Bash linting
+      },
+    })
 
-		vim.keymap.set("n", "<leader>gf", vim.lsp.buf.format, {})
-		vim.cmd([[autocmd BufWritePre *.go,*.sh,*.lua lua vim.lsp.buf.format()]])
-	end,
+    -- Automatically format and fix imports on save for Go files
+    vim.cmd([[autocmd BufWritePre *.go lua vim.lsp.buf.format()]])
+    
+    vim.keymap.set("n", "<leader>gf", vim.lsp.buf.format, {})
+  end,
 }
+
