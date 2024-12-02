@@ -16,6 +16,7 @@ return {
 					"lua",
 					"bash",
 					"cpp",
+					"proto",
 				},
 
 				-- Enable syntax highlighting using Treesitter

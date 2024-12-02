@@ -50,6 +50,9 @@ return {
 				},
 			})
 
+			-- Setup for Protobuf language server
+			lspconfig.buf_ls.setup({})
+
 			-- Setup for YAML language server
 			lspconfig.yamlls.setup({
 				capabilities = capabilities,

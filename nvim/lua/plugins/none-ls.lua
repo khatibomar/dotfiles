@@ -35,6 +35,10 @@ return {
 				-- C support
 				null_ls.builtins.formatting.clang_format,
 				null_ls.builtins.diagnostics.cppcheck,
+
+				-- Proto support
+				null_ls.builtins.formatting.protolint,
+				null_ls.builtins.diagnostics.buf,
 			},
 		})
 
