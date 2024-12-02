@@ -51,7 +51,6 @@ return {
 	},
 	{
 		"CopilotC-Nvim/CopilotChat.nvim",
-		-- version = "v2.10.0",
 		branch = "canary", -- Use the canary branch if you want to test the latest features but it might be unstable
 		-- Do not use branch and version together, either use branch or version
 		dependencies = {
@@ -65,6 +64,7 @@ return {
 			model = "claude-3.5-sonnet",
 			auto_follow_cursor = false, -- Don't follow the cursor after getting response
 			show_help = false, -- Show help in virtual text, set to true if that's 1st time using Copilot Chat
+			chat_autocomplete = true, -- Enable autocomplete for chat
 			mappings = {
 				-- Use tab for completion
 				complete = {
@@ -99,12 +99,10 @@ return {
 				show_diff = {
 					normal = "gmd",
 				},
-				-- Show the prompt
-				show_system_prompt = {
+				show_info = {
 					normal = "gmp",
 				},
-				-- Show the user selection
-				show_user_selection = {
+				show_context = {
 					normal = "gms",
 				},
 				-- Show help
@@ -116,6 +114,7 @@ return {
 		config = function(_, opts)
 			local chat = require("CopilotChat")
 			local select = require("CopilotChat.select")
+			local context = require("CopilotChat.context")
 			-- Use unnamed register for the selection
 			opts.selection = select.unnamed
 
@@ -123,21 +122,8 @@ return {
 			local user = hostname or vim.env.USER or "User"
 			opts.question_header = "  " .. user .. " "
 			opts.answer_header = "  Copilot "
-			-- Override the git prompts message
-			opts.prompts.Commit = {
-				prompt = 'Write commit message with commitizen convention. Write clear, informative commit messages that explain the "what" and "why" behind changes, not just the "how".',
-				selection = select.gitdiff,
-			}
-			opts.prompts.CommitStaged = {
-				prompt = 'Write commit message for the change with commitizen convention. Write clear, informative commit messages that explain the "what" and "why" behind changes, not just the "how".',
-				selection = function(source)
-					return select.gitdiff(source, true)
-				end,
-			}
 
 			chat.setup(opts)
-			-- Setup CMP integration
-			require("CopilotChat.integrations.cmp").setup()
 
 			vim.api.nvim_create_user_command("CopilotChatVisual", function(args)
 				chat.ask(args.args, { selection = select.visual })
@@ -237,11 +223,6 @@ return {
 				"<leader>am",
 				"<cmd>CopilotChatCommit<cr>",
 				desc = "CopilotChat - Generate commit message for all changes",
-			},
-			{
-				"<leader>aM",
-				"<cmd>CopilotChatCommitStaged<cr>",
-				desc = "CopilotChat - Generate commit message for staged changes",
 			},
 			-- Quick chat with Copilot
 			{
