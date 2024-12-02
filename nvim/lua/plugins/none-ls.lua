@@ -31,7 +31,6 @@ return {
 
 				-- Bash support
 				null_ls.builtins.formatting.shfmt, -- for Bash formatting
-				null_ls.builtins.diagnostics.shellcheck, -- for Bash linting
 
 				-- C support
 				null_ls.builtins.formatting.clang_format,
