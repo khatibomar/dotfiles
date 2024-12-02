@@ -66,7 +66,6 @@ return {
 						if vim.fn.filereadable(codegen_schema_path) == 1 then
 							client.config.settings.yaml.schemas[codegen_schema_path] = { "codegen.yaml", "codegen.yml" }
 							client.notify("workspace/didChangeConfiguration", { settings = client.config.settings })
-							vim.notify("Loaded schema from " .. codegen_schema_path)
 						end
 					end
 				end,
