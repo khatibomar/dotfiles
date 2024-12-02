@@ -26,9 +26,7 @@ https://nodejs.org/en/download/package-manager <br/>
 https://github.com/bash-lsp/bash-language-server <br/>
 https://github.com/clangd/clangd <br/>
 https://cppcheck.sourceforge.io <br/>
-https://github.com/lasorda/protobuf-language-server <br/>
 https://github.com/yoheimuta/protolint <br/>
-https://github.com/bufbuild/buf <br/>
 https://github.com/bufbuild/buf <br/>
 
 # Install
