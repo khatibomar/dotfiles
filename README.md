@@ -28,6 +28,7 @@ https://github.com/clangd/clangd <br/>
 https://cppcheck.sourceforge.io <br/>
 https://github.com/yoheimuta/protolint <br/>
 https://github.com/bufbuild/buf <br/>
+https://github.com/tamasfe/taplo <br/>
 
 # Install
 
