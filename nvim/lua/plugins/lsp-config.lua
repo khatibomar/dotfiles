@@ -55,6 +55,11 @@ return {
 				capabilities = capabilities,
 			})
 
+			-- Setup for TOML language server
+			lspconfig.taplo.setup({
+				capabilities = capabilities,
+			})
+
 			-- Setup for YAML language server
 			lspconfig.yamlls.setup({
 				capabilities = capabilities,
