@@ -36,7 +36,7 @@ local function run_make_command(target)
   -- Rename the new buffer to avoid overwriting the previous buffer
   vim.api.nvim_buf_set_name(buf, buf_name)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(output, "\n"))
-  vim.api.nvim_buf_set_option(buf, "modifiable", false)
+  vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
 
   -- Set the buffer to be deleted on quit
   vim.api.nvim_create_autocmd("BufLeave", {
