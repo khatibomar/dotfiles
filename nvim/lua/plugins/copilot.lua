@@ -51,7 +51,7 @@ return {
   },
   {
     "CopilotC-Nvim/CopilotChat.nvim",
-    branch = "canary", -- Use the canary branch if you want to test the latest features but it might be unstable
+    branch = "main",
     -- Do not use branch and version together, either use branch or version
     dependencies = {
       { "nvim-lua/plenary.nvim" },
@@ -63,8 +63,8 @@ return {
       prompts = prompts,
       model = "claude-3.5-sonnet",
       auto_follow_cursor = false, -- Don't follow the cursor after getting response
-      show_help = false,       -- Show help in virtual text, set to true if that's 1st time using Copilot Chat
-      chat_autocomplete = true, -- Enable autocomplete for chat
+      show_help = false,          -- Show help in virtual text, set to true if that's 1st time using Copilot Chat
+      chat_autocomplete = true,   -- Enable autocomplete for chat
       mappings = {
         -- Use tab for completion
         complete = {
