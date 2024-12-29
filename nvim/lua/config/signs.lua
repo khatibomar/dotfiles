@@ -11,7 +11,9 @@ local unified_styles = {
       Error = "󰅚", -- Cross mark
       Warn = "󰀪", -- Warning symbol
       Hint = "󰌶", -- Hint icon
-      Info = "󰋼" -- Info icon
+      Info = "󰋼", -- Info icon
+      Deprecated = "", -- Strikethrough or prohibition
+      Trace = "󰎝" -- Trace (debugging or log trace icon)
     }
   },
   geometric = {
@@ -25,7 +27,9 @@ local unified_styles = {
       Error = "◆", -- Diamond
       Warn = "▲", -- Triangle
       Hint = "●", -- Dot
-      Info = "◈" -- Diamond
+      Info = "◈", -- Diamond
+      Deprecated = "⬦", -- Hollow diamond
+      Trace = "⬤" -- Filled circle
     }
   },
   expressive = {
@@ -39,7 +43,9 @@ local unified_styles = {
       Error = "✗", -- Bold X
       Warn = "⚡", -- Lightning
       Hint = "💡", -- Light bulb
-      Info = "ℹ" -- Info
+      Info = "ℹ", -- Info
+      Deprecated = "❌", -- Cross mark
+      Trace = "🐞" -- Bug icon
     }
   },
   playful = {
@@ -53,7 +59,9 @@ local unified_styles = {
       Error = "😡", -- Angry emoji
       Warn = "⚠️", -- Warning sign
       Hint = "🤔", -- Thinking emoji
-      Info = "💬" -- Speech bubble
+      Info = "💬", -- Speech bubble
+      Deprecated = "👎", -- Thumbs down
+      Trace = "🔍" -- Magnifying glass
     }
   }
 }
@@ -81,7 +89,9 @@ local function apply_neotree_styles(style)
           error = style.diagnostics.Error,
           warn = style.diagnostics.Warn,
           hint = style.diagnostics.Hint,
-          info = style.diagnostics.Info
+          info = style.diagnostics.Info,
+          deprecated = style.diagnostics.Deprecated,
+          trace = style.diagnostics.Trace
         }
       }
     }
@@ -96,5 +106,6 @@ local function apply_unified_style(style_name)
   apply_neotree_styles(style)
 end
 
--- Apply default style on startup
+-- Apply the default style on startup (choose one)
 apply_unified_style("playful")
+
