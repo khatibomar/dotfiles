@@ -1,4 +1,4 @@
 vim.diagnostic.config({
-  virtual_text = false,
+	virtual_text = false,
 })
-vim.keymap.set('n', '<leader>fd','<cmd>lua vim.diagnostic.open_float()<cr>')
+vim.keymap.set("n", "<leader>fd", "<cmd>lua vim.diagnostic.open_float()<cr>")
