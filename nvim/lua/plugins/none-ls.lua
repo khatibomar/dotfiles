@@ -47,7 +47,6 @@ return {
 				null_ls.builtins.code_actions.gomodifytags,
 				null_ls.builtins.code_actions.impl,
 				null_ls.builtins.diagnostics.golangci_lint,
-				null_ls.builtins.diagnostics.staticcheck,
 
 				-- Bash support
 				null_ls.builtins.formatting.shfmt, -- for Bash formatting
