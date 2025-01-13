@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("gitconfig" "alacritty.toml" "htoprc")
+EXCLUDED_FILES=("gitconfig" "alacritty.toml" "htoprc" "mpv.conf")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -68,6 +68,17 @@ if [ -f "$CONFIG_DIR/htoprc" ]; then
 	mkdir -p "$HTOP_DIR" # Create the alacritty directory if it doesn't exist
 	echo "Copying htoprc to $HTOP_DIR/htoprc"
 	cp "$CONFIG_DIR/htoprc" "$HTOP_DIR/htoprc"
+else
+	echo "Error: Config directory $CONFIG_DIR does not exist."
+	exit 1
+fi
+
+# Handle mpv separately
+if [ -f "$CONFIG_DIR/mpv.conf" ]; then
+	MPV_DIR="$HOME/.config/mpv"
+	mkdir -p "$MPV_DIR" # Create the alacritty directory if it doesn't exist
+	echo "Copying mpv to $MPV_DIR/mpv.conf"
+	cp "$CONFIG_DIR/mpv.conf" "$MPV_DIR/mpv.conf"
 else
 	echo "Error: Config directory $CONFIG_DIR does not exist."
 	exit 1
