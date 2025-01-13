@@ -22,6 +22,7 @@ https://github.com/fatih/gomodifytags <br/>
 https://github.com/josharian/impl <br/>
 https://nodejs.org/en/download/package-manager <br/>
 https://github.com/bash-lsp/bash-language-server <br/>
+https://github.com/LuaLS/lua-language-server <br />
 https://github.com/clangd/clangd <br/>
 https://cppcheck.sourceforge.io <br/>
 https://github.com/bufbuild/buf <br/>
