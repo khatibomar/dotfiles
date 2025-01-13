@@ -58,7 +58,7 @@ api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 	pattern = { "*.txt", "*.md", "*.tex" },
 	callback = function()
 		vim.opt.spell = true
-		vim.opt.spelllang = "en" -- Arabic and Japanese are not supported
+		vim.opt.spelllang = "en_us" -- Arabic and Japanese are not supported
 	end,
 })
 
