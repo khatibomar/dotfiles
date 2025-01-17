@@ -22,6 +22,8 @@ opt.clipboard:append("unnamedplus") -- Use system clipboard
 opt.termguicolors = true -- Enable 24-bit colors
 opt.updatetime = 100 -- Reduce update time for completion
 opt.timeoutlen = 1000 -- Time to wait for mapped sequence
+opt.ruler = true -- Disable ruler
+opt.rulerformat = "%l,%v" -- Set ruler format
 
 -- Indentation options
 opt.expandtab = true -- Convert tabs to spaces
