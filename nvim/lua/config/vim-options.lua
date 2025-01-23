@@ -71,3 +71,9 @@ if opt.diff:get() then
 	api.nvim_set_keymap("n", "<localleader>2", ":diffget BASE<CR>", diff_opts)
 	api.nvim_set_keymap("n", "<localleader>3", ":diffget REMOTE<CR>", diff_opts)
 end
+
+vim.filetype.add({
+	extension = {
+		gotmpl = "go",
+	},
+})
