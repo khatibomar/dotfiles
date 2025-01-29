@@ -13,5 +13,6 @@ alias texit='tmux kill-session -a'
 alias cdr='cd $(git rev-parse --show-toplevel)'
 alias convert_to_mp4='function _convert_to_mp4() { input_file="$1"; base_name="${input_file%.*}"; ffmpeg -i "$input_file" -codec copy "${base_name}.mp4"; }; _convert_to_mp4'
 alias ytdl='yt-dlp --no-playlist --format "bv+ba/best" --merge-output-format mp4 --embed-metadata --embed-thumbnail --add-metadata --sub-lang en --embed-chapters --embed-subs --restrict-filenames'
+alias ytdlp='yt-dlp --format "bv+ba/best" --merge-output-format mp4 --embed-metadata --embed-thumbnail --add-metadata --sub-lang en --embed-chapters --embed-subs --restrict-filenames -o "%(playlist_title)s/%(playlist_index)02d - %(title)s.%(ext)s"'
 alias top=btop
 alias htop=btop
