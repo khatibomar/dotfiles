@@ -10,6 +10,9 @@ return {
 	},
 	{
 		"github/copilot.vim",
+		config = function()
+			vim.g.copilot_enabled = false
+		end,
 	},
 	{
 		"folke/which-key.nvim",
@@ -23,6 +26,7 @@ return {
 				{ "gmp", desc = "Show system prompt" },
 				{ "gms", desc = "Show selection" },
 				{ "gmy", desc = "Yank diff" },
+				{ "<leader>gm", group = "Copilot Chat" },
 			},
 		},
 	},
@@ -259,14 +263,5 @@ return {
 				size = { width = 50 },
 			})
 		end,
-	},
-	{
-		"folke/which-key.nvim",
-		optional = true,
-		opts = {
-			spec = {
-				{ "<leader>gm", group = "Copilot Chat" },
-			},
-		},
 	},
 }
