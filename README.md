@@ -30,6 +30,7 @@ https://github.com/bufbuild/buf <br/>
 https://github.com/tamasfe/taplo <br/>
 https://github.com/JohnnyMorganz/StyLua <br/>
 https://github.com/aristocratos/btop <br/>
+https://github.com/jstemmer/gotags <br />
 
 # Install
 
