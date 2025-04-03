@@ -69,7 +69,7 @@
 [merge]
   tool = sgdm
   conflictstyle = diff3
-  ff = only  # Prevent accidental merge commits
+  ff = only  
   commit = false
   stat = true
 
@@ -81,7 +81,7 @@
   cmd = sgdm -merge -result=\"$MERGED\" \"$LOCAL\" \"$BASE\" \"$REMOTE\"
 
 [rerere]
-  enabled = true  # Reuse recorded resolutions
+  enabled = true  
   autoupdate = true
 
 [push]
