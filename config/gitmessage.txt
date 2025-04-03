@@ -1,7 +1,7 @@
-#Subject: 50-character summary
+# 50-character summary
 
-#Body: Explain what and why, not how
-#- Bullet points if needed
-#- Reference issues/tickets
+# Explain what and why, not how
+# - Bullet points if needed
+# - Reference issues/tickets
 
 Signed-off-by: khatibomar <elkhatibomar@outlook.com>

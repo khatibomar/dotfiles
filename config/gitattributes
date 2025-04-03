@@ -1,0 +1,85 @@
+# ======================
+# Go Specific Configurations
+# ======================
+*.go text eol=lf diff=go
+go.mod merge=ours
+go.sum merge=ours
+**/vendor/** linguist-vendored
+*.test binary  # Compiled test binaries
+testdata/** linguist-generated
+
+# ======================
+# Source Control Essentials
+# ======================
+* text=auto
+
+# Shell scripts (LF required)
+*.sh text eol=lf
+scripts/**/*.sh text eol=lf
+
+# Never modify line endings for these
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.gz binary
+*.zip binary
+*.tar binary
+*.exe binary
+
+# ======================
+# Configuration Files
+# ======================
+.env text
+.env.* text
+*.toml text
+*.yaml text
+*.yml text
+*.json text
+Dockerfile text eol=lf
+Makefile text eol=lf
+
+# ======================
+# Merge Strategies
+# ======================
+# Prevent conflicts in lock files
+*.lock merge=ours
+*.mod merge=ours
+*.sum merge=ours
+
+# Union merge for non-critical files
+*.md merge=union
+*.txt merge=union
+CHANGELOG merge=union
+
+# ======================
+# Diff Configuration
+# ======================
+*.proto diff=proto
+*.sql diff=sql
+*.log diff=none
+*.pb.go diff=off  # Generated protobuf files
+
+# Custom diff drivers (add to git config)
+[diff "go"]
+  xfuncname = "^func ([A-Za-z_][A-Za-z0-9_]*)\\("
+[diff "proto"]
+  xfuncname = "^message ([A-Za-z_][A-Za-z0-9_]*)\\s*{"
+
+# ======================
+# GitHub Linguist Overrides
+# ======================
+assets/** linguist-vendored
+third_party/** linguist-vendored
+**/mocks/** linguist-generated
+**/testdata/** linguist-generated
+**/*_string.go linguist-generated  # Generated string methods
+**/zz_generated*.go linguist-generated  # Kubernetes-style generated code
+
+# ======================
+# Git LFS Configuration
+# ======================
+# Uncomment if using large files
+# *.zip filter=lfs diff=lfs merge=lfs -text
+# *.tar.gz filter=lfs diff=lfs merge=lfs -text
