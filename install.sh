@@ -17,3 +17,6 @@ bash "$SCRIPT_DIR/merge_gitconfig.sh"
 
 # Import GPG keys
 bash "$SCRIPT_DIR/import_gpg_keys.sh"
+
+# Install tools
+bash ./scripts/install_tools.sh
