@@ -1,64 +1,144 @@
 [alias]
-  # List available aliases
-  aliases = !git config --get-regexp alias | sed -re 's/alias\\.(\\S*)\\s(.*)$/\\1 = \\2/g'
-  # Command shortcuts
+  # Enhanced alias section
+  a = add
+  aa = add -A
+  ap = add -p
+  aliases = !git config --get-regexp alias | sed -re 's/alias\\.(\\S*)\\s(.*)$/\\1 ➔ \\2/' | sort
+  amend = commit --amend --no-edit
+  amend-all = commit --amend -a
+  br = branch -vv
   ci = commit -p
   co = checkout
+  cp = cherry-pick
+  dc = diff --cached
+  ds = diff --staged
+  ignore = update-index --skip-worktree
+  unignore = update-index --no-skip-worktree
+  redo = commit -c ORIG_HEAD
   st = status -s
-  # Display tree-like log, because default log is a pain…
-  lg1 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)' --all
-  lg2 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold cyan)%aD%C(reset) %C(bold green)(%ar)%C(reset)%C(auto)%d%C(reset)%n''          %C(white)%s%C(reset) %C(dim white)- %an%C(reset)'
-  lg = lg1
-  # Undo last commit but keep changed files in stage
-  uncommit = reset --soft HEAD~1
-  # Remove file(s) from Git but not from disk
-  untrack = rm --cache --
-  # Simple simple but really efficient to minimize the size of a diff. It uses color to inline the differences.
-  wdiff = diff --word-diff
+  standup = log --since '1 day ago' --oneline --author $(git config user.email)
+  undo = reset --soft HEAD~1
+  unstage = reset HEAD --
+  who = shortlog -n -s --
+  wipe = clean -fd && git reset --hard
+  
+  # Enhanced logging
+  lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+  lol = log --graph --decorate --oneline
+  lola = log --graph --decorate --oneline --all
+  
+  # Safety first
+  delete-merged-branches = !git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d
+  recent = for-each-ref --sort=-committerdate --format='%(committerdate:relative) %(refname:short) %(objectname:short)' refs/heads
+
 [user]
   email = elkhatibomar@outlook.com
   name = khatibomar
   signingkey = 023BC121E6D0ADEF
+  # Use conditional includes for different projects
+  [includeIf "gitdir:~/work/"]
+    path = ~/work/.gitconfig
+
 [commit]
   gpgsign = true
+  template = ~/.gitmessage.txt
+  verbose = true
+
 [core]
   editor = nvim
+  autocrlf = input
   excludesfile = ~/.gitignore_global
   whitespace = -trailing-space
+  filemode = false
+  symlinks = false
+  fsmonitor = true  
+  trustctime = false
+  ignorecase = false
+
 [diff]
   tool = nvimdiff
   guitool = nvimdiff
+  algorithm = histogram  
+  renames = true
+  mnemonicprefix = true
+
 [difftool]
   prompt = false
   guiDefault = false
+
 [merge]
-  tool = nvimdiff
-  guitool = nvimdiff
+  tool = sgdm
   conflictstyle = diff3
+  ff = only  # Prevent accidental merge commits
+  commit = false
+  stat = true
+
 [mergetool]
-  prompt = false
-  guiDefault = false
   keepBackup = false
+  prompt = false
 
-# NOTE: must set "vimdiff" here and NOT "nvimdiff" for custom layout to work
-# But just for this [mergetool "vimdiff"] section.
-# The other [merge] and [mergetool] sections above MUST be set to "nvimdiff"
-[mergetool "vimdiff"]
-  layout = (LOCAL,BASE,REMOTE) / MERGED + (LOCAL,MERGED,REMOTE) + LOCAL,REMOTE + (LOCAL,MERGED) / (REMOTE,MERGED) + (BASE,LOCAL) / (BASE,REMOTE)
+[mergetool.sgdm]
+  cmd = sgdm -merge -result=\"$MERGED\" \"$LOCAL\" \"$BASE\" \"$REMOTE\"
+
+[rerere]
+  enabled = true  # Reuse recorded resolutions
+  autoupdate = true
+
 [push]
-  # Default push should only push the current branch to its push target, regardless of its remote name
   default = upstream
-  # When pushing, also push tags whose commit-ishs are now reachable upstream
   followTags = true
-[status]
-  # Display submodule rev change summaries in status
-  submoduleSummary = true
-  # Recursively traverse untracked directories to display all contents
-  showUntrackedFiles = all
-[color "branch"]
-  # Blue on black is hard to read in git branch -vv: use cyan instead
-  upstream = cyan
-[tag]
-  # Sort tags as version numbers whenever applicable, so 1.10.2 is AFTER 1.2.0.
-  sort = version:refname
+  autoSetupRemote = true  
 
+[pull]
+  rebase = merges  
+  ff = only
+
+[rebase]
+  autoStash = true
+  autoSquash = true
+  missingCommits = error
+  instructionFormat = %an <%ae> %ai: %s
+  stat = true
+
+[filter "lfs"]
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+
+[color]
+  ui = auto
+  diff = auto
+  status = auto
+  branch = auto
+  interactive = auto
+
+[color "diff"]
+  meta = yellow bold
+  frag = magenta bold
+  commit = yellow bold
+  old = red bold
+  new = green bold
+  whitespace = red reverse
+
+[color "status"]
+  added = green
+  changed = yellow
+  untracked = red
+
+[interactive]
+  diffFilter = diff --color-words
+
+[protocol]
+  version = 2  
+
+[init]
+  defaultBranch = main
+
+[advice]
+  detachedHead = false  
+  statusHints = false
+  addEmptyPathspec = false
+
+[url "ssh://git@github.com/"]
+  insteadOf = https://github.com/
