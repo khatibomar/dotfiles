@@ -68,7 +68,7 @@
 
 [merge]
   tool = sgdm
-  conflictstyle = diff3
+  conflictstyle = zdiff3
   ff = only  
   commit = false
   stat = true

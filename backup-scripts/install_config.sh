@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("gitconfig" "alacritty.toml" "htoprc" "mpv.conf")
+EXCLUDED_FILES=("alacritty.toml" "htoprc" "mpv.conf")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then

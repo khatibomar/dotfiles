@@ -12,9 +12,6 @@ bash "$SCRIPT_DIR/install_config.sh"
 # Run the backup and copy process for Scripts
 bash "$SCRIPT_DIR/install_scripts.sh"
 
-# Merge custom gitconfig settings
-bash "$SCRIPT_DIR/merge_gitconfig.sh"
-
 # Import GPG keys
 bash "$SCRIPT_DIR/import_gpg_keys.sh"
 
