@@ -59,6 +59,8 @@
   tool = nvimdiff
   guitool = nvimdiff
   algorithm = histogram  
+  renames = true
+  mnemonicprefix = true
 
 [difftool]
   prompt = false
@@ -66,7 +68,7 @@
 
 [merge]
   tool = sgdm
-  conflictstyle = zdiff3
+  conflictstyle = diff3
   ff = only  
   commit = false
   stat = true
