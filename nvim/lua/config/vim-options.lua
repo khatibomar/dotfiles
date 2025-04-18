@@ -18,6 +18,11 @@ opt.confirm = true -- Ask for confirmation when closing modified buffers
 opt.showcmd = false -- Disable command display in the last line
 opt.ruler = false -- Disable ruler
 opt.fillchars = { eob = " " } -- Use space for empty lines
+opt.list = true -- Enable listchars
+opt.listchars = { -- Set listchars
+  tab = "│ ", -- Tab character with low-visibility indicator
+  trail = "·", -- Trailing spaces with subtle dot
+}
 opt.clipboard:append("unnamedplus") -- Use system clipboard
 opt.termguicolors = true -- Enable 24-bit colors
 opt.updatetime = 100 -- Reduce update time for completion
@@ -26,21 +31,27 @@ opt.ruler = true -- Disable ruler
 opt.rulerformat = "%l,%v" -- Set ruler format
 
 -- Indentation options
-opt.expandtab = true -- Convert tabs to spaces
-opt.tabstop = 2 -- Number of spaces per tab
-opt.softtabstop = 2 -- Number of spaces per soft tab
-opt.shiftwidth = 2 -- Number of spaces per indent
+opt.expandtab = true   -- Convert tabs to spaces
+opt.tabstop = 2        -- Number of spaces per tab
+opt.softtabstop = 2    -- Number of spaces per soft tab
+opt.shiftwidth = 2     -- Number of spaces per indent
 opt.breakindent = true -- Preserve indentation in wrapped lines
 
 -- File behavior options
-opt.backup = false -- Disable backup files
-opt.swapfile = false -- Disable swap files
+opt.backup = false      -- Disable backup files
+opt.swapfile = false    -- Disable swap files
 opt.writebackup = false -- Disable write backups
-opt.undofile = true -- Enable persistent undo
-opt.autoread = true -- Reload files changed outside of Neovim
+opt.undofile = true     -- Enable persistent undo
+opt.autoread = true     -- Reload files changed outside of Neovim
 
 -- Colorscheme
 vim.cmd([[colorscheme leaf-light]])
+
+-- Set custom colors for listchars
+vim.cmd([[
+  highlight Whitespace guifg=#C8E4CB gui=nocombine
+  highlight NonText guifg=#C8E4CB gui=nocombine
+]])
 
 -- don't auto comment new line
 api.nvim_create_autocmd("BufEnter", { command = [[set formatoptions-=cro]] })
@@ -48,32 +59,32 @@ api.nvim_create_autocmd("BufEnter", { command = [[set formatoptions-=cro]] })
 -- Autocommand group for autoread
 local group = api.nvim_create_augroup("AutoReadGroup", { clear = true })
 api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
-	group = group,
-	callback = function()
-		vim.cmd("checktime") -- Check if files have changed externally
-	end,
-	desc = "Check for file changes on focus or buffer enter",
+  group = group,
+  callback = function()
+    vim.cmd("checktime") -- Check if files have changed externally
+  end,
+  desc = "Check for file changes on focus or buffer enter",
 })
 
 -- Enable spell checking for certain file types
 api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-	pattern = { "*.txt", "*.md", "*.tex" },
-	callback = function()
-		vim.opt.spell = true
-		vim.opt.spelllang = "en_us" -- Arabic and Japanese are not supported
-	end,
+  pattern = { "*.txt", "*.md", "*.tex" },
+  callback = function()
+    vim.opt.spell = true
+    vim.opt.spelllang = "en_us" -- Arabic and Japanese are not supported
+  end,
 })
 
 -- Diff mode key mappings
 if opt.diff:get() then
-	local diff_opts = { noremap = true, silent = true }
-	api.nvim_set_keymap("n", "<localleader>1", ":diffget LOCAL<CR>", diff_opts)
-	api.nvim_set_keymap("n", "<localleader>2", ":diffget BASE<CR>", diff_opts)
-	api.nvim_set_keymap("n", "<localleader>3", ":diffget REMOTE<CR>", diff_opts)
+  local diff_opts = { noremap = true, silent = true }
+  api.nvim_set_keymap("n", "<localleader>1", ":diffget LOCAL<CR>", diff_opts)
+  api.nvim_set_keymap("n", "<localleader>2", ":diffget BASE<CR>", diff_opts)
+  api.nvim_set_keymap("n", "<localleader>3", ":diffget REMOTE<CR>", diff_opts)
 end
 
 vim.filetype.add({
-	extension = {
-		gotmpl = "go",
-	},
+  extension = {
+    gotmpl = "go",
+  },
 })
