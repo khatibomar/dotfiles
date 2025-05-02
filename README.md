@@ -15,7 +15,6 @@ https://github.com/junegunn/fzf <br/>
 https://github.com/BurntSushi/ripgrep <br/>
 https://github.com/lsd-rs/lsd <br/>
 https://github.com/sharkdp/bat <br/>
-https://github.com/golangci/golangci-lint <br/>
 https://github.com/golang/tools/tree/master/gopls <br/>
 https://github.com/dominikh/go-tools <br/>
 https://github.com/fatih/gomodifytags <br/>

@@ -48,6 +48,7 @@ return {
 						buildFlags = buildTags(),
 					},
 				},
+				staticcheck = true,
 			})
 
 			-- Setup for Protobuf language server
