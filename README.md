@@ -30,6 +30,8 @@ https://github.com/tamasfe/taplo <br/>
 https://github.com/JohnnyMorganz/StyLua <br/>
 https://github.com/aristocratos/btop <br/>
 https://github.com/jstemmer/gotags <br />
+https://golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment <br />
+https://github.com/golangci/golangci-lint <br />
 
 # Install
 
@@ -44,4 +46,3 @@ and place the real private key inside then run the script<br/>
 
 https://github.com/cpow/neovim-for-newbs <br/>
 Chatgpt :)
-
