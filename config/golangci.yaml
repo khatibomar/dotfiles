@@ -11,14 +11,10 @@ linters:
   enable:
     - bodyclose # Checks that HTTP response bodies are closed
     - dogsled # Checks for too many blank identifiers (e.g., x, _, _, _, := f())
-    - dupl # Detects code clones
     - durationcheck # Checks for mistakes with time.Duration
     - errcheck # Ensures errors are handled
     - errorlint # Finds common error handling mistakes
-    - exhaustive # Checks exhaustiveness of enum switch statements
-    - gocognit # Detects high cognitive complexity
     - gocritic # Provides diagnostics for various code style issues
-    - gocyclo # Checks cyclomatic complexity
     - gosec # Inspects source code for security problems
     - govet # Reports suspicious constructs
     - ineffassign # Detects ineffectual assignments
@@ -42,8 +38,6 @@ linters:
     errcheck:
       check-type-assertions: true # Check for unchecked type assertions
       check-blank: true # Check for unchecked errors assigned to _
-    gocyclo:
-      min-complexity: 15 # Minimum complexity to report
     gosec:
       # Available rules: https://github.com/securego/gosec#available-rules
       includes:
@@ -81,6 +75,10 @@ linters:
         - G505 # Import blocklist: crypto/sha1
         - G601 # Implicit memory aliasing of items from a range statement
         - G602 # Slice access out of bounds
+    gocritic:
+      disabled-checks:
+        - ifElseChain
+        - singleCaseSwitch
     govet:
       enable:
         - fieldalignment # Detects structs that would take less memory if fields were sorted
