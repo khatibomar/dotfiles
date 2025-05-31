@@ -1,179 +1,139 @@
 version: "2"
-run:
-  timeout: 5m
-  issues-exit-code: 1
-  tests: true
-
-# Output configuration options
-output:
-  format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
-  sort-results: true
 
 # Configure formatters
 formatters:
   enable:
-    - gofmt
-    - goimports
+    - gofmt # Standard Go code formatter
+    - goimports # Formats imports and adds missing ones
 
-# Configure specific linters
-linters-settings:
-  govet:
-    disable:
-      - shadow
-    enable:
-      - fieldalignment
-    settings:
-      printf:
-        funcs:
-          - (log).Printf
-          - (log).Fatalf
-          - (log).Panicf
-          - (*log.Logger).Printf
-          - (*log.Logger).Fatalf
-          - (*log.Logger).Panicf
-          - (slog.Logger).Info
-          - (slog.Logger).Error
-          - (slog.Logger).Warn
-          - (slog.Logger).Debug
-          - (*slog.Logger).Info
-          - (*slog.Logger).Error
-          - (*slog.Logger).Warn
-          - (*slog.Logger).Debug
-
-  staticcheck:
-    checks: ["all"]
-
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-
-  gocyclo:
-    min-complexity: 15
-
-  unused:
-    check-exported: false
-
-  gosec:
-    # Available rules: https://github.com/securego/gosec#available-rules
-    includes:
-      - G101 # Look for hard coded credentials
-      - G102 # Bind to all interfaces
-      - G103 # Audit the use of unsafe block
-      - G104 # Audit errors not checked
-      - G106 # Audit the use of ssh.InsecureIgnoreHostKey
-      - G107 # Url provided to HTTP request as taint input
-      - G108 # Profiling endpoint automatically exposed
-      - G109 # Potential Integer overflow made by strconv.Atoi result conversion to int16/32
-      - G110 # Potential DoS vulnerability via decompression bomb
-      - G111 # Potential directory traversal
-      - G112 # Potential slowloris attack
-      - G114 # Use of net/http serve function that has no support for setting timeouts
-      - G201 # SQL query construction using format string
-      - G202 # SQL query construction using string concatenation
-      - G203 # Use of unescaped data in HTML templates
-      - G204 # Audit use of command execution
-      - G301 # Poor file permissions used when creating a directory
-      - G302 # Poor file permissions used when creation of file
-      - G303 # Creating tempfile using a predictable path
-      - G304 # File path provided as taint input
-      - G305 # File traversal when extracting zip/tar archive
-      - G306 # Poor file permissions used when writing to a file
-      - G307 # Deferring a method which returns an error
-      - G401 # Detect the usage of weak crypto algorithms
-      - G402 # Look for bad TLS connection settings
-      - G403 # Ensure minimum RSA key length of 2048 bits
-      - G404 # Insecure random number source (rand)
-      - G501 # Import blocklist: crypto/md5
-      - G502 # Import blocklist: crypto/des
-      - G503 # Import blocklist: crypto/rc4
-      - G504 # Import blocklist: net/http/cgi
-      - G505 # Import blocklist: crypto/sha1
-      - G601 # Implicit memory aliasing of items from a range statement
-      - G602 # Slice access out of bounds
-
-  prealloc:
-    # Report preallocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them.
-    simple: true
-    # Report preallocation suggestions on range loops.
-    range-loops: true
-    # Report preallocation suggestions on for loops.
-    for-loops: false
-
-  sloglint:
-    # Use it to disable checks for specific k-v args separated by comma.
-    no-printf: err, error
-
-# Enable specific linters
 linters:
-  disable-all: true
+  default: none
   enable:
-    # Default linters for correctness
-    - govet # Examines Go source code and reports suspicious constructs
-    - staticcheck # Static analysis that's fast, thorough, with low false-positive rate
-    - unused # Checks Go code for unused constants, variables, functions and types
-    - ineffassign # Detects when assignments to existing variables are not used
-    - errcheck # Checks for unchecked errors
-
-    # Security-focused linters
+    - bodyclose # Checks that HTTP response bodies are closed
+    - dogsled # Checks for too many blank identifiers (e.g., x, _, _, _, := f())
+    - dupl # Detects code clones
+    - durationcheck # Checks for mistakes with time.Duration
+    - errcheck # Ensures errors are handled
+    - errorlint # Finds common error handling mistakes
+    - exhaustive # Checks exhaustiveness of enum switch statements
+    - gocognit # Detects high cognitive complexity
+    - gocritic # Provides diagnostics for various code style issues
+    - gocyclo # Checks cyclomatic complexity
     - gosec # Inspects source code for security problems
-    - nilerr # Finds the code that returns nil even if it checks that the error is not nil
-    - nilnil # Checks that there is no simultaneous return of nil error and an invalid value
-    - bodyclose # Checks whether HTTP response body is closed successfully
-    - noctx # Finds sending HTTP request without context.Context
-    - sqlclosecheck # Checks that sql.Rows, sql.Stmt are closed properly
-
-    # Performance-focused linters
-    - prealloc # Finds slice declarations that could potentially be pre-allocated
-    - makezero # Finds slice declarations with non-zero initial length
-    - perfsprint # Checks that fmt.Sprintf can be replaced with a faster alternative
-    - unconvert # Remove unnecessary type conversions
-    - wastedassign # Finds wasted assignment statements
-    - durationcheck # Checks for two durations multiplied together
-
-    # Code quality linters
+    - govet # Reports suspicious constructs
+    - ineffassign # Detects ineffectual assignments
+    - loggercheck # Checks for logger performance improvements
+    - makezero # Finds slice declarations that could use make with zero length
     - misspell # Finds commonly misspelled English words
-    - gocyclo # Computes and checks the cyclomatic complexity of functions
-    - dupl # Detects duplicate code
-    - gocognit # Computes and checks the cognitive complexity of functions
-    - sloglint # Ensure consistent code style when using log/slog
-    - errorlint # Detects problems with error wrapping
-    - exhaustive # Check exhaustiveness of enum switch statements
-    - loggercheck # Checks key value pairs for common logger libraries (slog)
-    - gocritic # Provides diagnostics that check for bugs, performance and style issues
-    - dogsled # Checks assignments with too many blank identifiers
+    - nilerr # Finds code that returns nil even if error is not nil
+    - nilnil # Checks that a function doesn't return (nil, nil)
+    - noctx # Finds HTTP requests without context.Context
+    - perfsprint # Checks for inefficient use of fmt.Sprintf
+    - prealloc # Suggests array preallocation
+    - sloglint # Checks for proper use of structured logging
+    - sqlclosecheck # Ensures SQL rows and statements are properly closed
+    - staticcheck # Go linter providing advanced checks
+    - unconvert # Removes unnecessary type conversions
+    - unused # Checks for unused constants, variables, functions and types
+    - wastedassign # Finds wasted assignments
 
-# Configure how issues are reported
+  # Configure specific linters
+  settings:
+    errcheck:
+      check-type-assertions: true # Check for unchecked type assertions
+      check-blank: true # Check for unchecked errors assigned to _
+    gocyclo:
+      min-complexity: 15 # Minimum complexity to report
+    gosec:
+      # Available rules: https://github.com/securego/gosec#available-rules
+      includes:
+        - G101 # Look for hard coded credentials
+        - G102 # Bind to all interfaces
+        - G103 # Audit the use of unsafe block
+        - G104 # Audit errors not checked
+        - G106 # Audit the use of ssh.InsecureIgnoreHostKey
+        - G107 # Url provided to HTTP request as taint input
+        - G108 # Profiling endpoint automatically exposed
+        - G109 # Potential Integer overflow
+        - G110 # Potential DoS vulnerability via decompression bombs
+        - G111 # Potential directory traversal
+        - G112 # Potential slowloris attack
+        - G114 # Use of net/http serve function that has no support for setting timeouts
+        - G201 # SQL query construction using format string
+        - G202 # SQL query construction using string concatenation
+        - G203 # Use of unescaped data in HTML templates
+        - G204 # Audit use of command execution
+        - G301 # Poor file permissions used when creating a directory
+        - G302 # Poor file permissions used when creation of file
+        - G303 # Creating tempfile using a predictable path
+        - G304 # File path provided as taint input
+        - G305 # File traversal when extracting zip archive
+        - G306 # Poor file permissions used when writing to a file
+        - G307 # Deferring a method which returns an error
+        - G401 # Detect the usage of weak crypto algorithms
+        - G402 # Look for bad TLS connection settings
+        - G403 # Ensure minimum RSA key length of 2048 bits
+        - G404 # Insecure random number source (rand)
+        - G501 # Import blocklist: crypto/md5
+        - G502 # Import blocklist: crypto/des
+        - G503 # Import blocklist: crypto/rc4
+        - G504 # Import blocklist: net/http/cgi
+        - G505 # Import blocklist: crypto/sha1
+        - G601 # Implicit memory aliasing of items from a range statement
+        - G602 # Slice access out of bounds
+    govet:
+      enable:
+        - fieldalignment # Detects structs that would take less memory if fields were sorted
+      disable:
+        - shadow # Disables checking for shadowed variables
+      settings:
+        printf:
+          funcs:
+            - (log).Printf # Check Printf-like calls to log.Printf
+            - (log).Fatalf # Check Printf-like calls to log.Fatalf
+            - (log).Panicf # Check Printf-like calls to log.Panicf
+            - (*log.Logger).Printf # Check Printf-like calls to *log.Logger.Printf
+            - (*log.Logger).Fatalf # Check Printf-like calls to *log.Logger.Fatalf
+            - (*log.Logger).Panicf # Check Printf-like calls to *log.Logger.Panicf
+            - (slog.Logger).Info # Check Printf-like calls to slog.Logger.Info
+            - (slog.Logger).Error # Check Printf-like calls to slog.Logger.Error
+            - (slog.Logger).Warn # Check Printf-like calls to slog.Logger.Warn
+            - (slog.Logger).Debug # Check Printf-like calls to slog.Logger.Debug
+            - (*slog.Logger).Info # Check Printf-like calls to *slog.Logger.Info
+            - (*slog.Logger).Error # Check Printf-like calls to *slog.Logger.Error
+            - (*slog.Logger).Warn # Check Printf-like calls to *slog.Logger.Warn
+            - (*slog.Logger).Debug # Check Printf-like calls to *slog.Logger.Debug
+    prealloc:
+      simple: true # Report preallocation suggestions only on simple loops
+      range-loops: true # Report preallocation suggestions on range loops
+      for-loops: false # Report preallocation suggestions on for loops
+    staticcheck:
+      checks:
+        - all # Enable all staticcheck checks
+  exclusions:
+    generated: lax
+    presets:
+      - comments # Skip comment-related checks
+      - common-false-positives # Skip common false positive issues
+      - legacy # Skip legacy code issue checks
+      - std-error-handling # Skip standard error handling checks
+    rules:
+      - linters:
+          - dupl # Skip duplicate code checking in tests
+          - gocyclo # Skip complexity checking in tests
+          - gosec # Skip security checking in tests
+          - prealloc # Skip preallocation checking in tests
+        path: _test\.go
+      - linters:
+          - all # Skip all linters for protobuf generated files
+        path: \.pb\.go
+      - linters:
+          - all # Skip all linters for generated files
+        path: \.gen\.go
+      - linters:
+          - all # Skip all linters for mock files
+        path: \.mock\.go
+
 issues:
-  exclude-rules:
-    # Exclude some linters from running on tests
-    - path: _test\.go
-      linters:
-        - dupl
-        - gocyclo
-        - gosec
-        - prealloc
-
-    # Exclude linting issues in generated files
-    - path: \.pb\.go
-      linters:
-        - all
-    - path: \.gen\.go
-      linters:
-        - all
-    - path: \.mock\.go
-      linters:
-        - all
-
-  # Maximum issues count per one linter
-  max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text
-  max-same-issues: 0
-
-  # Show only new issues created after git revision
-  new: false
-
-  # Don't fix found issues automatically
-  fix: false
+  max-issues-per-linter: 0 # Report all issues for each linter (no limit)
+  max-same-issues: 0 # Report all issues of the same kind (no limit)

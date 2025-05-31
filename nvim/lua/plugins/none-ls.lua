@@ -4,6 +4,29 @@ return {
     local null_ls = require("null-ls")
     local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
+    -- Create a custom source for fieldalignment
+    local fieldalignment_source = {
+      name = "fieldalignment",
+      method = null_ls.methods.CODE_ACTION,
+      filetypes = { "go" },
+      generator = {
+        fn = function(params)
+          return {
+            {
+              title = "fieldalignment: Fix struct padding",
+              action = function()
+                local file_path = params.bufname
+                vim.cmd("write") -- Save before running
+                vim.fn.jobstart({ "fieldalignment", "-fix", file_path }, {
+                  on_exit = function() vim.cmd("edit") end
+                })
+              end,
+            },
+          }
+        end,
+      },
+    }
+
     null_ls.setup({
       on_attach = function(client, bufnr)
         if client.supports_method("textDocument/formatting") then
@@ -47,6 +70,9 @@ return {
         null_ls.builtins.code_actions.gomodifytags,
         null_ls.builtins.code_actions.impl,
         null_ls.builtins.diagnostics.golangci_lint,
+
+        -- Custom struct padding fixer
+        fieldalignment_source,
 
         -- Bash support
         null_ls.builtins.formatting.shfmt, -- for Bash formatting
