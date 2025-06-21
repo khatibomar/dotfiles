@@ -80,9 +80,8 @@ linters:
         - ifElseChain
         - singleCaseSwitch
     govet:
-      enable:
-        - fieldalignment # Detects structs that would take less memory if fields were sorted
       disable:
+        - fieldalignment # Detects structs that would take less memory if fields were sorted
         - shadow # Disables checking for shadowed variables
       settings:
         printf:

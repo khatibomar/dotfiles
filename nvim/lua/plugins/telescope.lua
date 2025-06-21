@@ -51,10 +51,10 @@ return {
 					},
 					file_ignore_patterns = {
 						"node_modules",
-						".git",
+						"^.git",
 						"%.pb%.go",
-						".idea",
-						".run",
+						"^.idea",
+						"^.run",
 					},
 					-- Apply hidden and no_ignore globally
 					hidden = true, -- Include hidden files by default
