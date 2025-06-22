@@ -14,6 +14,29 @@
   ds = diff --staged
   ignore = update-index --skip-worktree
   unignore = update-index --no-skip-worktree
+
+  # Quick navigation and info
+  s = status --short --branch
+  d = diff
+  dt = difftool
+  mt = mergetool
+  sw = switch
+  swc = switch -c
+
+  # Fast commits
+  cm = commit -m
+  ca = commit -am
+
+  # Branch management
+  bd = branch -d
+  bD = branch -D
+  bm = branch -m
+
+  # Quick push/pull
+  ps = push
+  pl = pull
+  psu = push -u origin HEAD
+
   redo = commit -c ORIG_HEAD
   st = status -s
   standup = log --since '1 day ago' --oneline --author $(git config user.email)
@@ -21,12 +44,12 @@
   unstage = reset HEAD --
   who = shortlog -n -s --
   wipe = clean -fd && git reset --hard
-  
+
   # Enhanced logging
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
   lol = log --graph --decorate --oneline
   lola = log --graph --decorate --oneline --all
-  
+
   # Safety first
   delete-merged-branches = !git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d
   recent = for-each-ref --sort=-committerdate --format='%(committerdate:relative) %(refname:short) %(objectname:short)' refs/heads
@@ -51,46 +74,64 @@
   whitespace = -trailing-space
   filemode = false
   symlinks = false
-  fsmonitor = true  
+  fsmonitor = true
   trustctime = false
   ignorecase = false
+  pager = delta --features=line-numbers,decorations
+  precomposeUnicode = true
+  quotepath = false
 
 [diff]
   tool = nvimdiff
-  guitool = nvimdiff
-  algorithm = histogram  
+  algorithm = histogram
   renames = true
   mnemonicprefix = true
+  colorMoved = default
+  colorMovedWS = allow-indentation-change
 
 [difftool]
   prompt = false
   guiDefault = false
 
+[difftool "nvimdiff"]
+  cmd = $HOME/.local/bin/git-nvimdiff diff \"$LOCAL\" \"$REMOTE\"
+
 [merge]
-  tool = sgdm
+  tool = nvimdiff
   conflictstyle = zdiff3
-  ff = only  
-  commit = false
-  stat = true
+  autoStash = true
 
 [mergetool]
   keepBackup = false
   prompt = false
 
-[mergetool.sgdm]
-  cmd = sgdm -merge -result=\"$MERGED\" \"$LOCAL\" \"$BASE\" \"$REMOTE\"
+[mergetool "nvimdiff"]
+  cmd = $HOME/.local/bin/git-nvimdiff mergetool
+  trustExitCode = true
+
+[delta]
+  navigate = true
+  light = false
+  side-by-side = true
+  line-numbers = true
+  syntax-theme = Dracula
+  plus-style = "syntax #012800"
+  minus-style = "syntax #340001"
+  hunk-header-decoration-style = "blue box"
+  hunk-header-file-style = "red"
+  hunk-header-line-number-style = "#067a00"
+  hunk-header-style = "file line-number syntax"
 
 [rerere]
-  enabled = true  
+  enabled = true
   autoupdate = true
 
 [push]
   default = upstream
   followTags = true
-  autoSetupRemote = true  
+  autoSetupRemote = true
 
 [pull]
-  rebase = merges  
   ff = only
 
 [rebase]
@@ -127,16 +168,38 @@
   untracked = red
 
 [interactive]
-  diffFilter = diff --color-words
+  diffFilter = delta --color-only --features=interactive
+
+[feature]
+  manyFiles = true
+  experimental = false
+
+[index]
+  version = 4
+
+[pack]
+  useSparse = true
+
+[status]
+  showUntrackedFiles = all
+  submoduleSummary = true
+
+[fetch]
+  prune = true
+  prunetags = true
+  writeCommitGraph = true
+
+[log]
+  date = iso
 
 [protocol]
-  version = 2  
+  version = 2
 
 [init]
   defaultBranch = main
 
 [advice]
-  detachedHead = false  
+  detachedHead = false
   statusHints = false
   addEmptyPathspec = false
 
