@@ -97,7 +97,7 @@
   cmd = $HOME/.local/bin/git-nvimdiff diff \"$LOCAL\" \"$REMOTE\"
 
 [merge]
-  tool = nvimdiff
+  tool = meld
   conflictstyle = zdiff3
   autoStash = true
 
@@ -105,8 +105,8 @@
   keepBackup = false
   prompt = false
 
-[mergetool "nvimdiff"]
-  cmd = $HOME/.local/bin/git-nvimdiff mergetool
+[mergetool "meld"]
+  cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
   trustExitCode = true
 
 [delta]
