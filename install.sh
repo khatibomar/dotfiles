@@ -22,9 +22,6 @@ bash "$SCRIPT_DIR/import_gpg_keys.sh"
 # Import SSH keys
 bash "$SCRIPT_DIR/import_ssh_keys.sh"
 
-# Install tools
-bash ./scripts/install_tools.sh
-
 # Install Git enhancements
 echo "Installing Git enhancement tools..."
 mkdir -p ~/.local/bin

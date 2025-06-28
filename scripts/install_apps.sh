@@ -40,6 +40,14 @@ check_fedora() {
 install_system_packages() {
     print_header "Installing System Packages"
 
+    # Ensure local bin directory exists
+    mkdir -p "$HOME/.local/bin"
+
+    # Add to PATH if not already there
+    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+        export PATH="$PATH:$HOME/.local/bin"
+    fi
+
     print_info "Updating system packages..."
     sudo dnf update -y
 
@@ -339,32 +347,58 @@ install_fonts() {
 install_optional_apps() {
     print_header "Installing Optional Applications"
 
-    # Docker
-    read -p "Do you want to install Docker? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        local script_dir="$(dirname "$0")"
-        if [ -f "$script_dir/install_docker.sh" ]; then
-            bash "$script_dir/install_docker.sh"
-        else
-            print_info "Installing Docker via DNF..."
-            sudo dnf install -y docker docker-compose
-            sudo systemctl enable --now docker
-            sudo usermod -aG docker $USER
-        fi
-        print_success "Docker installation completed"
+    # Install Docker automatically
+    print_info "Installing Docker..."
+    local script_dir="$(dirname "$0")"
+    if [ -f "$script_dir/install_docker.sh" ]; then
+        bash "$script_dir/install_docker.sh"
+    else
+        print_info "Installing Docker via DNF..."
+        sudo dnf install -y docker docker-compose
+        sudo systemctl enable --now docker
+        sudo usermod -aG docker $USER
+    fi
+    print_success "Docker installation completed"
+
+    # Install additional tools from install_tools.sh functionality
+    print_info "Installing additional development tools..."
+
+    # Install git-recover
+    if ! command -v git-recover &>/dev/null; then
+        print_info "Installing git-recover..."
+        curl -fsSL "https://raw.githubusercontent.com/ethomson/git-recover/refs/heads/main/git-recover" -o "$HOME/.local/bin/git-recover"
+        chmod +x "$HOME/.local/bin/git-recover"
+        print_success "git-recover installed"
     fi
 
-    # Tectonic (LaTeX)
-    read -p "Do you want to install Tectonic (LaTeX engine)? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        local script_dir="$(dirname "$0")"
-        if [ -f "$script_dir/install_tectonic.sh" ]; then
-            bash "$script_dir/install_tectonic.sh"
-        else
-            print_info "Tectonic install script not found, skipping..."
-        fi
+    # Install golangci-lint
+    if ! command -v golangci-lint &>/dev/null; then
+        print_info "Installing golangci-lint..."
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$HOME/.local/bin"
+        print_success "golangci-lint installed"
+    fi
+
+    # Install lua-language-server
+    if ! command -v lua-language-server &>/dev/null; then
+        print_info "Installing lua-language-server..."
+        local latest_version=$(curl -s https://api.github.com/repos/LuaLS/lua-language-server/releases/latest | grep -o '"tag_name": ".*"' | sed 's/"tag_name": "//;s/"//' || echo "3.7.4")
+        local download_url="https://github.com/LuaLS/lua-language-server/releases/download/$latest_version/lua-language-server-$latest_version-linux-x64.tar.gz"
+        local tmp_dir=$(mktemp -d)
+        curl -L "$download_url" -o "$tmp_dir/lua-language-server.tar.gz"
+        tar -xzf "$tmp_dir/lua-language-server.tar.gz" -C "$tmp_dir"
+        mkdir -p "$HOME/.local/share/lua-language-server"
+        cp -r "$tmp_dir"/* "$HOME/.local/share/lua-language-server/"
+        ln -sf "$HOME/.local/share/lua-language-server/bin/lua-language-server" "$HOME/.local/bin/lua-language-server"
+        rm -rf "$tmp_dir"
+        print_success "lua-language-server installed"
+    fi
+
+    # Install buf (Protocol Buffers)
+    if ! command -v buf &>/dev/null; then
+        print_info "Installing buf..."
+        curl -sSL https://github.com/bufbuild/buf/releases/latest/download/buf-Linux-x86_64 -o "$HOME/.local/bin/buf"
+        chmod +x "$HOME/.local/bin/buf"
+        print_success "buf installed"
     fi
 }
 
@@ -391,13 +425,7 @@ main() {
     print_header "Fedora Apps Installation for Dotfiles"
     print_info "This script will install all applications used in your dotfiles configuration"
 
-    # Confirm installation
-    read -p "Do you want to proceed with the installation? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Installation cancelled"
-        exit 0
-    fi
+    print_info "Proceeding with automatic installation..."
 
     # Run installation steps
     check_fedora
