@@ -99,6 +99,7 @@ install_system_packages() {
         "make"
         "cmake"
         "ninja-build"
+        "ninja"
 
         # Code analysis tools
         "cppcheck"

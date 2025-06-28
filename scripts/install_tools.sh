@@ -407,35 +407,72 @@ install_lua_language_server() {
         return 0
     fi
 
+    # Get latest release version
+    info "Fetching latest lua-language-server release..."
+    local latest_version=$(curl -s https://api.github.com/repos/LuaLS/lua-language-server/releases/latest | grep -o '"tag_name": ".*"' | sed 's/"tag_name": "//;s/"//')
+
+    if [ -z "$latest_version" ]; then
+        latest_version="3.7.4"  # Fallback version
+        info "Could not determine latest version, using fallback $latest_version"
+    fi
+
     case "$OS_TYPE" in
         fedora)
-            # Build from source for Fedora
-            info "Building lua-language-server from source"
+            info "Installing lua-language-server $latest_version for Linux"
+            local download_url="https://github.com/LuaLS/lua-language-server/releases/download/$latest_version/lua-language-server-$latest_version-linux-x64.tar.gz"
             local tmp_dir=$(mktemp -d)
-            git clone https://github.com/LuaLS/lua-language-server "$tmp_dir"
-            cd "$tmp_dir"
-            ./make.sh
+
+            # Download and extract
+            curl -L "$download_url" -o "$tmp_dir/lua-language-server.tar.gz"
+            tar -xzf "$tmp_dir/lua-language-server.tar.gz" -C "$tmp_dir"
+
+            # Install to local directory
             mkdir -p "$HOME/.local/share/lua-language-server"
-            cp -r ./bin ./main.lua ./main2.lua ./main3.lua ./meta ./locale "$HOME/.local/share/lua-language-server"
+            cp -r "$tmp_dir"/* "$HOME/.local/share/lua-language-server/"
+
+            # Create symlink to binary
             ln -sf "$HOME/.local/share/lua-language-server/bin/lua-language-server" "$INSTALL_DIR/lua-language-server"
-            cd - > /dev/null
+
+            # Cleanup
             rm -rf "$tmp_dir"
             ;;
         debian)
-            # Similar approach for Debian
-            info "Building lua-language-server from source"
+            info "Installing lua-language-server $latest_version for Linux"
+            local download_url="https://github.com/LuaLS/lua-language-server/releases/download/$latest_version/lua-language-server-$latest_version-linux-x64.tar.gz"
             local tmp_dir=$(mktemp -d)
-            git clone https://github.com/LuaLS/lua-language-server "$tmp_dir"
-            cd "$tmp_dir"
-            ./make.sh
+
+            # Download and extract
+            curl -L "$download_url" -o "$tmp_dir/lua-language-server.tar.gz"
+            tar -xzf "$tmp_dir/lua-language-server.tar.gz" -C "$tmp_dir"
+
+            # Install to local directory
             mkdir -p "$HOME/.local/share/lua-language-server"
-            cp -r ./bin ./main.lua ./main2.lua ./main3.lua ./meta ./locale "$HOME/.local/share/lua-language-server"
+            cp -r "$tmp_dir"/* "$HOME/.local/share/lua-language-server/"
+
+            # Create symlink to binary
             ln -sf "$HOME/.local/share/lua-language-server/bin/lua-language-server" "$INSTALL_DIR/lua-language-server"
-            cd - > /dev/null
+
+            # Cleanup
             rm -rf "$tmp_dir"
             ;;
         mac)
-            $INSTALL_CMD lua-language-server
+            info "Installing lua-language-server $latest_version for macOS"
+            local download_url="https://github.com/LuaLS/lua-language-server/releases/download/$latest_version/lua-language-server-$latest_version-darwin-x64.tar.gz"
+            local tmp_dir=$(mktemp -d)
+
+            # Download and extract
+            curl -L "$download_url" -o "$tmp_dir/lua-language-server.tar.gz"
+            tar -xzf "$tmp_dir/lua-language-server.tar.gz" -C "$tmp_dir"
+
+            # Install to local directory
+            mkdir -p "$HOME/.local/share/lua-language-server"
+            cp -r "$tmp_dir"/* "$HOME/.local/share/lua-language-server/"
+
+            # Create symlink to binary
+            ln -sf "$HOME/.local/share/lua-language-server/bin/lua-language-server" "$INSTALL_DIR/lua-language-server"
+
+            # Cleanup
+            rm -rf "$tmp_dir"
             ;;
         *)
             error "Unsupported OS for lua-language-server installation"
