@@ -243,6 +243,11 @@ install_nodejs_tools() {
     print_header "Installing Node.js Tools"
 
     if command -v npm &>/dev/null; then
+        # Configure npm global directory
+        print_info "Configuring npm global directory..."
+        mkdir -p ~/.npm-global
+        npm config set prefix '~/.npm-global'
+
         print_info "Installing Node.js development tools..."
 
         # Language servers and linters
