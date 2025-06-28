@@ -53,7 +53,7 @@ install_system_packages() {
 
     # Core development tools
     print_info "Installing core development tools..."
-    sudo dnf groupinstall -y "Development Tools" "C Development Tools and Libraries"
+    sudo sudo dnf5 install @development-tools @c-development
 
     # Essential packages used in dotfiles
     local packages=(
