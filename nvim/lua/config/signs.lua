@@ -103,12 +103,23 @@ local function load_saved_style()
 	return "default" -- fallback to default if no saved style
 end
 
--- Apply LSP diagnostic signs
+-- Apply LSP diagnostic signs using vim.diagnostic.config
 local function apply_lsp_diagnostic_signs(diagnostics)
+	local signs = {}
+
 	for type, icon in pairs(diagnostics) do
-		local hl = "DiagnosticSign" .. type
-		vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+		local severity = vim.diagnostic.severity[type:upper()]
+		if severity then
+			signs[severity] = icon
+		end
 	end
+
+	vim.diagnostic.config({
+		signs = {
+			text = signs,
+		},
+		severity_sort = true,
+	})
 end
 
 -- Apply Neo-tree styles
