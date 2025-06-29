@@ -35,8 +35,8 @@ return {
 		})
 
 		-- Keymaps
-		vim.keymap.set("n", "<C-n>", ":Neotree toggle reveal filesystem left<CR>", {})
-		vim.keymap.set("n", "<leader>bf", ":Neotree buffers reveal float<CR>", {})
-		vim.keymap.set("n", "<leader>gs", ":Neotree git_status<CR>", {})
+		vim.keymap.set("n", "<C-n>", ":Neotree toggle reveal filesystem left<CR>", { desc = "Toggle File Explorer" })
+		vim.keymap.set("n", "<leader>bf", ":Neotree buffers reveal float<CR>", { desc = "Buffer Explorer" })
+		vim.keymap.set("n", "<leader>gs", ":Neotree git_status<CR>", { desc = "Git Status" })
 	end,
 }

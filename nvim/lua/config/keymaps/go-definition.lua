@@ -58,7 +58,7 @@ local function close_tabs_and_return()
 end
 
 -- Keymap to go to definition in a new tab
-vim.keymap.set("n", "gd", go_to_definition_tab, { noremap = true, silent = true })
+vim.keymap.set("n", "gd", go_to_definition_tab, { noremap = true, silent = true, desc = "Go to Definition (New Tab)" })
 
 -- Keymap to close all tabs and return to the original tab
-vim.keymap.set("n", "<leader>q", close_tabs_and_return, { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>q", close_tabs_and_return, { noremap = true, silent = true, desc = "Close Tabs & Return" })
