@@ -187,31 +187,25 @@ return {
             vim.fn.system(cmd)
         end
 
-        -- Global timer reference for diagnostics
-        local diagnostics_timer = nil
+        -- Global flag to track if diagnostics location list is active
+        local diagnostics_loclist_active = false
+        local diagnostics_autocmd_id = nil
 
-        -- Async diagnostics location list function
-        function AsyncDiagnosticsLocationList()
-            -- Stop any existing timer
-            if diagnostics_timer then
-                diagnostics_timer:stop()
-                diagnostics_timer:close()
-                diagnostics_timer = nil
-            end
-
+        -- Auto-updating diagnostics location list function
+        function AutoDiagnosticsLocationList()
             -- Function to update diagnostics and check if empty
             local function update_diagnostics()
                 -- Get current diagnostics
                 local diagnostics = vim.diagnostic.get(0) -- Current buffer
 
-                -- If no diagnostics, close location list and stop timer
+                -- If no diagnostics, close location list and stop autocmd
                 if #diagnostics == 0 then
                     vim.cmd('lclose')
-                    if diagnostics_timer then
-                        diagnostics_timer:stop()
-                        diagnostics_timer:close()
-                        diagnostics_timer = nil
+                    if diagnostics_autocmd_id then
+                        vim.api.nvim_del_autocmd(diagnostics_autocmd_id)
+                        diagnostics_autocmd_id = nil
                     end
+                    diagnostics_loclist_active = false
                     return
                 end
 
@@ -221,11 +215,16 @@ return {
 
             -- Initial update
             update_diagnostics()
+            diagnostics_loclist_active = true
 
-            -- Set up timer to update every 5 seconds
-            diagnostics_timer = vim.loop.new_timer()
-            if diagnostics_timer then
-                diagnostics_timer:start(5000, 5000, vim.schedule_wrap(function()
+            -- Remove existing autocmd if any
+            if diagnostics_autocmd_id then
+                vim.api.nvim_del_autocmd(diagnostics_autocmd_id)
+            end
+
+            -- Set up autocmd to update on buffer save
+            diagnostics_autocmd_id = vim.api.nvim_create_autocmd("BufWritePost", {
+                callback = function()
                     -- Check if location list window still exists
                     local loclist_exists = false
                     for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -240,20 +239,21 @@ return {
                         end
                     end
 
-                    -- If location list window was closed manually, stop timer
+                    -- If location list window was closed manually, stop autocmd
                     if not loclist_exists then
-                        if diagnostics_timer then
-                            diagnostics_timer:stop()
-                            diagnostics_timer:close()
-                            diagnostics_timer = nil
+                        if diagnostics_autocmd_id then
+                            vim.api.nvim_del_autocmd(diagnostics_autocmd_id)
+                            diagnostics_autocmd_id = nil
                         end
+                        diagnostics_loclist_active = false
                         return
                     end
 
-                    -- Update diagnostics
-                    update_diagnostics()
-                end))
-            end
+                    -- Update diagnostics after a short delay to allow LSP to update
+                    vim.defer_fn(update_diagnostics, 100)
+                end,
+                desc = "Update diagnostics location list on save"
+            })
         end
 
         -- Register leader key mappings with proper grouping
@@ -341,8 +341,8 @@ return {
             { "<leader>dt",       "<cmd>Telescope diagnostics<cr>",               desc = "Show Diagnostics" },
             {
                 "<leader>dl",
-                function() AsyncDiagnosticsLocationList() end,
-                desc = "Diagnostics to Location List (Auto-refresh)",
+                function() AutoDiagnosticsLocationList() end,
+                desc = "Diagnostics to Location List (Auto-update on save)",
             },
             { "<leader>dn", "<cmd>lua vim.diagnostic.goto_next()<cr>",  desc = "Next Diagnostic" },
             { "<leader>dp", "<cmd>lua vim.diagnostic.goto_prev()<cr>",  desc = "Previous Diagnostic" },
