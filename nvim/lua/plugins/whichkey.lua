@@ -187,6 +187,75 @@ return {
             vim.fn.system(cmd)
         end
 
+        -- Global timer reference for diagnostics
+        local diagnostics_timer = nil
+
+        -- Async diagnostics location list function
+        function AsyncDiagnosticsLocationList()
+            -- Stop any existing timer
+            if diagnostics_timer then
+                diagnostics_timer:stop()
+                diagnostics_timer:close()
+                diagnostics_timer = nil
+            end
+
+            -- Function to update diagnostics and check if empty
+            local function update_diagnostics()
+                -- Get current diagnostics
+                local diagnostics = vim.diagnostic.get(0) -- Current buffer
+
+                -- If no diagnostics, close location list and stop timer
+                if #diagnostics == 0 then
+                    vim.cmd('lclose')
+                    if diagnostics_timer then
+                        diagnostics_timer:stop()
+                        diagnostics_timer:close()
+                        diagnostics_timer = nil
+                    end
+                    return
+                end
+
+                -- Update location list with diagnostics
+                vim.diagnostic.setloclist()
+            end
+
+            -- Initial update
+            update_diagnostics()
+
+            -- Set up timer to update every 5 seconds
+            diagnostics_timer = vim.loop.new_timer()
+            if diagnostics_timer then
+                diagnostics_timer:start(5000, 5000, vim.schedule_wrap(function()
+                    -- Check if location list window still exists
+                    local loclist_exists = false
+                    for _, win in ipairs(vim.api.nvim_list_wins()) do
+                        local buf = vim.api.nvim_win_get_buf(win)
+                        local buf_type = vim.api.nvim_buf_get_option(buf, 'buftype')
+                        if buf_type == 'quickfix' then
+                            local wininfo = vim.fn.getwininfo(win)[1]
+                            if wininfo and wininfo.loclist == 1 then
+                                loclist_exists = true
+                                break
+                            end
+                        end
+                    end
+
+                    -- If location list window was closed manually, stop timer
+                    if not loclist_exists then
+                        if diagnostics_timer then
+                            diagnostics_timer:stop()
+                            diagnostics_timer:close()
+                            diagnostics_timer = nil
+                        end
+                        return
+                    end
+
+                    -- Update diagnostics
+                    update_diagnostics()
+                end))
+            end
+        end
+
         -- Register leader key mappings with proper grouping
         wk.add({
             -- File operations
@@ -240,7 +309,6 @@ return {
             { "<leader>l",        group = "List/Search" },
             { "<leader>lb",       "<cmd>Telescope buffers<cr>",                   desc = "List Buffers" },
             { "<leader>lg",       "<cmd>Telescope live_grep<cr>",                 desc = "Live Grep" },
-            { "<leader>ld",       "<cmd>Telescope diagnostics<cr>",               desc = "List Diagnostics" },
             { "<leader>lh",       "<cmd>Telescope help_tags<cr>",                 desc = "Help Tags" },
             { "<leader>lk",       "<cmd>Telescope keymaps<cr>",                   desc = "Keymaps" },
             { "<leader>lm",       "<cmd>Telescope marks<cr>",                     desc = "Marks" },
@@ -273,22 +341,23 @@ return {
             { "<leader>dt",       "<cmd>Telescope diagnostics<cr>",               desc = "Show Diagnostics" },
             {
                 "<leader>dl",
-                "<cmd>lua vim.diagnostic.setloclist()<cr>",
-                desc = "Diagnostics to Location List",
+                function() AsyncDiagnosticsLocationList() end,
+                desc = "Diagnostics to Location List (Auto-refresh)",
             },
-            { "<leader>dn", "<cmd>lua vim.diagnostic.goto_next()<cr>", desc = "Next Diagnostic" },
-            { "<leader>dp", "<cmd>lua vim.diagnostic.goto_prev()<cr>", desc = "Previous Diagnostic" },
+            { "<leader>dn", "<cmd>lua vim.diagnostic.goto_next()<cr>",  desc = "Next Diagnostic" },
+            { "<leader>dp", "<cmd>lua vim.diagnostic.goto_prev()<cr>",  desc = "Previous Diagnostic" },
+            { "<leader>df", "<cmd>lua vim.diagnostic.open_float()<cr>", desc = "Show Diagnostic Float" },
 
             -- Jump operations (most common navigation)
             { "<leader>j",  group = "Jump" },
-            { "<leader>je", "'.",                                      desc = "Jump to Last Edit" },
-            { "<leader>ji", "'^",                                      desc = "Jump to Last Insert" },
-            { "<leader>jb", "<C-o>",                                   desc = "Jump Back" },
-            { "<leader>jf", "<C-i>",                                   desc = "Jump Forward" },
-            { "<leader>jl", "``",                                      desc = "Jump to Last Position" },
-            { "<leader>ja", "<C-^>",                                   desc = "Jump to Alternate Buffer" },
-            { "<leader>jh", "<cmd>Telescope jumplist<cr>",             desc = "Jump History" },
-            { "<leader>jn", function() show_navigation_info() end,     desc = "Show Definition Navigation" },
+            { "<leader>je", "'.",                                       desc = "Jump to Last Edit" },
+            { "<leader>ji", "'^",                                       desc = "Jump to Last Insert" },
+            { "<leader>jb", "<C-o>",                                    desc = "Jump Back" },
+            { "<leader>jf", "<C-i>",                                    desc = "Jump Forward" },
+            { "<leader>jl", "``",                                       desc = "Jump to Last Position" },
+            { "<leader>ja", "<C-^>",                                    desc = "Jump to Alternate Buffer" },
+            { "<leader>jh", "<cmd>Telescope jumplist<cr>",              desc = "Jump History" },
+            { "<leader>jn", function() show_navigation_info() end,      desc = "Show Definition Navigation" },
 
             -- Special keys
             { "<leader>m",  desc = "Toggle Go Struct" },
