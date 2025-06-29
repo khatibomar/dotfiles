@@ -27,14 +27,49 @@ return {
         local wk = require("which-key")
         wk.setup(opts)
 
-        -- Go-to-definition functions (moved from keymaps.lua)
-        local original_tab = nil
-        local spawned_tabs = {}
+        -- Smart go-to-definition with tab reuse and navigation stack
+        local navigation_stack = {}
+        local max_tabs = 8 -- Limit to prevent tab explosion
+
+        -- Helper function to get file path from URI
+        local function uri_to_filepath(uri)
+            return vim.uri_to_fname(uri)
+        end
+
+        -- Helper function to find existing tab with file
+        local function find_tab_with_file(filepath)
+            local tabs = vim.api.nvim_list_tabpages()
+            for _, tab in ipairs(tabs) do
+                local wins = vim.api.nvim_tabpage_list_wins(tab)
+                for _, win in ipairs(wins) do
+                    local buf = vim.api.nvim_win_get_buf(win)
+                    local buf_name = vim.api.nvim_buf_get_name(buf)
+                    if buf_name == filepath then
+                        return tab
+                    end
+                end
+            end
+            return nil
+        end
+
+        -- Count definition tabs (exclude original)
+        local function count_definition_tabs()
+            local count = 0
+            for _, entry in ipairs(navigation_stack) do
+                if vim.api.nvim_tabpage_is_valid(entry.tab) then
+                    count = count + 1
+                end
+            end
+            return count
+        end
 
         local function go_to_definition_tab()
-            if not original_tab then
-                original_tab = vim.api.nvim_get_current_tabpage()
-            end
+            -- Save current position in navigation stack
+            local current_tab = vim.api.nvim_get_current_tabpage()
+            local current_buf = vim.api.nvim_get_current_buf()
+            local current_pos = vim.api.nvim_win_get_cursor(0)
+            local current_file = vim.api.nvim_buf_get_name(current_buf)
+
             local params = vim.lsp.util.make_position_params(0, "utf-8")
             vim.lsp.buf_request(0, "textDocument/definition", params, function(err, result)
                 if err or not result or vim.tbl_isempty(result) then
@@ -42,37 +77,108 @@ return {
                     return
                 end
 
-                vim.cmd("tabnew")
-                local new_tab = vim.api.nvim_get_current_tabpage()
-                table.insert(spawned_tabs, new_tab)
-
                 for _, loc in ipairs(result) do
                     if loc and loc.uri and loc.range then
-                        vim.lsp.util.show_document(loc, "utf-8", { focus = true })
+                        local target_file = uri_to_filepath(loc.uri)
+                        local existing_tab = find_tab_with_file(target_file)
+
+                        if existing_tab then
+                            -- Switch to existing tab
+                            vim.api.nvim_set_current_tabpage(existing_tab)
+                            vim.lsp.util.show_document(loc, "utf-8", { focus = true })
+                            vim.notify("Switched to existing tab: " .. vim.fn.fnamemodify(target_file, ":t"))
+                        else
+                            -- Check tab limit
+                            if count_definition_tabs() >= max_tabs then
+                                vim.notify(
+                                    "Too many definition tabs open. Use <leader>q to clean up or increase max_tabs.")
+                                return
+                            end
+
+                            -- Create new tab
+                            vim.cmd("tabnew")
+                            local new_tab = vim.api.nvim_get_current_tabpage()
+
+                            -- Add to navigation stack
+                            table.insert(navigation_stack, {
+                                from_tab = current_tab,
+                                from_file = current_file,
+                                from_pos = current_pos,
+                                tab = new_tab,
+                                file = target_file,
+                                timestamp = os.time()
+                            })
+
+                            vim.lsp.util.show_document(loc, "utf-8", { focus = true })
+                            vim.notify("Opened: " ..
+                                vim.fn.fnamemodify(target_file, ":t") ..
+                                " (Tab " .. count_definition_tabs() .. "/" .. max_tabs .. ")")
+                        end
                         return
                     end
                 end
 
                 vim.notify("No valid definition location found.")
-                vim.cmd("tabclose")
             end)
         end
 
         local function close_tabs_and_return()
-            for _, tab in ipairs(spawned_tabs) do
-                if vim.api.nvim_tabpage_is_valid(tab) then
-                    vim.api.nvim_set_current_tabpage(tab)
+            if #navigation_stack == 0 then
+                vim.notify("No definition tabs to close.")
+                return
+            end
+
+            local closed_count = 0
+            -- Close all definition tabs (in reverse order to avoid index issues)
+            for i = #navigation_stack, 1, -1 do
+                local entry = navigation_stack[i]
+                if vim.api.nvim_tabpage_is_valid(entry.tab) then
+                    vim.api.nvim_set_current_tabpage(entry.tab)
                     vim.cmd("tabclose")
+                    closed_count = closed_count + 1
                 end
             end
 
-            if original_tab and vim.api.nvim_tabpage_is_valid(original_tab) then
-                vim.api.nvim_set_current_tabpage(original_tab)
+            -- Return to most recent origin tab
+            local last_entry = navigation_stack[#navigation_stack]
+            if last_entry and vim.api.nvim_tabpage_is_valid(last_entry.from_tab) then
+                vim.api.nvim_set_current_tabpage(last_entry.from_tab)
+                -- Restore cursor position
+                if last_entry.from_pos then
+                    vim.api.nvim_win_set_cursor(0, last_entry.from_pos)
+                end
             end
 
-            original_tab = nil
-            spawned_tabs = {}
+            navigation_stack = {}
             vim.cmd("redraw")
+            vim.notify("Closed " .. closed_count .. " definition tabs and returned to origin.")
+        end
+
+        -- Clean up invalid tabs from navigation stack
+        local function cleanup_navigation_stack()
+            navigation_stack = vim.tbl_filter(function(entry)
+                return vim.api.nvim_tabpage_is_valid(entry.tab)
+            end, navigation_stack)
+        end
+
+        -- Show navigation stack info
+        local function show_navigation_info()
+            cleanup_navigation_stack()
+            if #navigation_stack == 0 then
+                vim.notify("No definition tabs open.")
+                return
+            end
+
+            local info = { "Definition Navigation Stack:" }
+            for i, entry in ipairs(navigation_stack) do
+                local file_name = vim.fn.fnamemodify(entry.file, ":t")
+                local from_name = vim.fn.fnamemodify(entry.from_file, ":t")
+                table.insert(info, string.format("  %d. %s (from %s)", i, file_name, from_name))
+            end
+            table.insert(info, "")
+            table.insert(info, "Use <leader>q to close all and return to origin.")
+
+            vim.notify(table.concat(info, "\n"))
         end
 
         -- Tmux popup function (moved from keymaps.lua)
@@ -88,7 +194,7 @@ return {
             { "<leader>/",        "<cmd>Telescope current_buffer_fuzzy_find<cr>", desc = "Search Buffer" },
             { "<leader>s",        ":w<CR>",                                       desc = "Save File" },
             { "<leader>p",        function() OpenTmuxPopup() end,                 desc = "Toggle Tmux Popup" },
-            { "<leader>q",        function() close_tabs_and_return() end,         desc = "Close Tabs & Return" },
+            { "<leader>q",        function() close_tabs_and_return() end,         desc = "Close Definition Tabs & Return" },
 
             -- AI/Copilot operations
             { "<leader>a",        group = "AI/Copilot",                           mode = { "n", "v" } },
@@ -182,6 +288,7 @@ return {
             { "<leader>jl", "``",                                      desc = "Jump to Last Position" },
             { "<leader>ja", "<C-^>",                                   desc = "Jump to Alternate Buffer" },
             { "<leader>jh", "<cmd>Telescope jumplist<cr>",             desc = "Jump History" },
+            { "<leader>jn", function() show_navigation_info() end,     desc = "Show Definition Navigation" },
 
             -- Special keys
             { "<leader>m",  desc = "Toggle Go Struct" },
