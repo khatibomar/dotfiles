@@ -129,7 +129,7 @@ end
 
 -- Tmux popup integration
 function OpenTmuxPopup()
-    vim.fn.system("tmux display-popup -d '#{pane_current_path}' -xC -yC -w80% -h80% -E 'nvim'")
+    vim.fn.system("bash $HOME/scripts/toggle_tmux_popup.sh")
 end
 
 -- Auto diagnostics location list
