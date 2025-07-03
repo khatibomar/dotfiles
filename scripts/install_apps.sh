@@ -79,6 +79,7 @@ install_system_packages() {
         "tree"
         "lsd"
         "fd-find"
+        "hyperfine"
 
         # Network tools
         "curl"
