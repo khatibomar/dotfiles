@@ -132,97 +132,6 @@ function OpenTmuxPopup()
     vim.fn.system("bash $HOME/scripts/toggle_tmux_popup.sh")
 end
 
--- Auto diagnostics location list
-function AutoDiagnosticsLocationList()
-    local function refresh_diagnostics_list()
-        local bufnr = vim.api.nvim_get_current_buf()
-        local was_open = vim.fn.getloclist(0, { winid = 0 }).winid ~= 0
-
-        -- Try multiple ways to get diagnostics
-        local diagnostics = vim.diagnostic.get(bufnr)
-        if #diagnostics == 0 then
-            diagnostics = vim.diagnostic.get(0)
-        end
-        if #diagnostics == 0 then
-            diagnostics = vim.diagnostic.get()
-        end
-
-        -- If still no diagnostics, try getting from LSP directly
-        if #diagnostics == 0 then
-            for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
-                local lsp_diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr) or {}
-                for _, diag in ipairs(lsp_diagnostics) do
-                    table.insert(diagnostics, diag)
-                end
-            end
-        end
-
-        print(string.format("Found %d diagnostics", #diagnostics))
-
-        if #diagnostics > 0 then
-            local items = {}
-            for _, diagnostic in ipairs(diagnostics) do
-                table.insert(items, {
-                    bufnr = diagnostic.bufnr or vim.api.nvim_get_current_buf(),
-                    lnum = diagnostic.lnum + 1,
-                    col = diagnostic.col + 1,
-                    text = diagnostic.message,
-                    type = diagnostic.severity == vim.diagnostic.severity.ERROR and 'E' or
-                        diagnostic.severity == vim.diagnostic.severity.WARN and 'W' or
-                        diagnostic.severity == vim.diagnostic.severity.INFO and 'I' or 'H'
-                })
-            end
-
-            -- Update location list content
-            vim.fn.setloclist(0, items, 'r')
-
-            -- Only open if it wasn't already open
-            if not was_open then
-                vim.cmd("lopen")
-            end
-            print(string.format("Location list updated: %d diagnostics", #diagnostics))
-        else
-            -- Clear the list but only close if it was open
-            vim.fn.setloclist(0, {}, 'r')
-            if was_open then
-                vim.cmd("lclose")
-            end
-            print("No diagnostics - location list cleared")
-        end
-    end
-
-    -- Initial refresh
-    refresh_diagnostics_list()
-
-    local group = vim.api.nvim_create_augroup("AutoDiagnosticsLocationList", { clear = true })
-
-    print("Setting up autocmds for buffer:", vim.api.nvim_get_current_buf())
-
-    -- Try DiagnosticChanged without buffer restriction first
-    vim.api.nvim_create_autocmd("DiagnosticChanged", {
-        group = group,
-        callback = function(args)
-            print("DiagnosticChanged event fired!")
-            refresh_diagnostics_list()
-        end,
-        desc = "Refresh diagnostics on change",
-    })
-
-    -- BufWritePost for current buffer
-    vim.api.nvim_create_autocmd("BufWritePost", {
-        group = group,
-        buffer = 0,
-        callback = function(args)
-            print("BufWritePost event fired!")
-            vim.defer_fn(function()
-                print("Refreshing after save...")
-                refresh_diagnostics_list()
-            end, 500)
-        end,
-        desc = "Refresh diagnostics after save",
-    })
-end
-
 return {
     "folke/which-key.nvim",
     event = "VeryLazy",
@@ -255,71 +164,77 @@ return {
 
             -- AI/Copilot
             { "<leader>a",  group = "AI/Copilot" },
-            { "<leader>ae", "<cmd>CopilotChatExplain<cr>",           desc = "Explain Code" },
-            { "<leader>at", "<cmd>CopilotChatTests<cr>",             desc = "Generate Tests" },
-            { "<leader>ar", "<cmd>CopilotChatReview<cr>",            desc = "Review Code" },
-            { "<leader>aR", "<cmd>CopilotChatRefactor<cr>",          desc = "Refactor Code" },
-            { "<leader>an", "<cmd>CopilotChatBetterNamings<cr>",     desc = "Better Naming" },
-            { "<leader>av", "<cmd>CopilotChatToggle<cr>",            desc = "Toggle Chat" },
-            { "<leader>am", "<cmd>CopilotChatCommit<cr>",            desc = "Generate Commit" },
-            { "<leader>af", "<cmd>CopilotChatFix<cr>",               desc = "Fix Diagnostic" },
+            { "<leader>ae", "<cmd>CopilotChatExplain<cr>",                        desc = "Explain Code" },
+            { "<leader>at", "<cmd>CopilotChatTests<cr>",                          desc = "Generate Tests" },
+            { "<leader>ar", "<cmd>CopilotChatReview<cr>",                         desc = "Review Code" },
+            { "<leader>aR", "<cmd>CopilotChatRefactor<cr>",                       desc = "Refactor Code" },
+            { "<leader>an", "<cmd>CopilotChatBetterNamings<cr>",                  desc = "Better Naming" },
+            { "<leader>av", "<cmd>CopilotChatToggle<cr>",                         desc = "Toggle Chat" },
+            { "<leader>am", "<cmd>CopilotChatCommit<cr>",                         desc = "Generate Commit" },
+            { "<leader>af", "<cmd>CopilotChatFix<cr>",                            desc = "Fix Diagnostic" },
 
             -- Buffer operations
             { "<leader>b",  group = "Buffers" },
-            { "<leader>bf", "<cmd>Neotree buffers reveal float<cr>", desc = "Buffer Explorer" },
-            { "<leader>bd", "<cmd>bdelete<cr>",                      desc = "Delete Buffer" },
-            { "<leader>bn", "<cmd>bnext<cr>",                        desc = "Next Buffer" },
-            { "<leader>bp", "<cmd>bprevious<cr>",                    desc = "Previous Buffer" },
+            { "<leader>bf", "<cmd>Neotree buffers reveal float<cr>",              desc = "Buffer Explorer" },
+            { "<leader>bd", "<cmd>bdelete<cr>",                                   desc = "Delete Buffer" },
+            { "<leader>bn", "<cmd>bnext<cr>",                                     desc = "Next Buffer" },
+            { "<leader>bp", "<cmd>bprevious<cr>",                                 desc = "Previous Buffer" },
 
             -- Code operations
-            { "<leader>c",  group = "Code" },
+            { "<leader>c",  group = "Code Analysis & Navigation" },
             { "<leader>ca", desc = "Code Action" },
-            { "<leader>cr", "<cmd>lua vim.lsp.buf.rename()<cr>",     desc = "Rename Symbol" },
-            { "<leader>cf", "<cmd>lua vim.lsp.buf.format()<cr>",     desc = "Format Code" },
+            { "<leader>cr", desc = "Rename Symbol (inc-rename)" },
+            { "<leader>cf", "<cmd>lua vim.lsp.buf.format()<cr>",                  desc = "Format Code" },
+            { "<leader>cd", "<cmd>Glance definitions<cr>",                        desc = "Peek Definitions" },
+            { "<leader>cD", "<cmd>Glance type_definitions<cr>",                   desc = "Peek Type Definitions" },
+            { "<leader>ci", "<cmd>Glance implementations<cr>",                    desc = "Peek Implementations" },
+            { "<leader>cR", "<cmd>Glance references<cr>",                         desc = "Peek References" },
+            { "<leader>cs", desc = "Document Symbols (handled in trouble config)" },
 
-            -- Diagnostics
-            { "<leader>d",  group = "Diagnostics" },
-            { "<leader>dt", "<cmd>Telescope diagnostics<cr>",        desc = "Show Diagnostics" },
-            {
-                "<leader>dl",
-                function()
-                    AutoDiagnosticsLocationList()
-                end,
-                desc = "Auto Location List",
-            },
-            { "<leader>dn", "<cmd>lua vim.diagnostic.goto_next()<cr>",  desc = "Next Diagnostic" },
-            { "<leader>dp", "<cmd>lua vim.diagnostic.goto_prev()<cr>",  desc = "Previous Diagnostic" },
-            { "<leader>df", "<cmd>lua vim.diagnostic.open_float()<cr>", desc = "Show Float" },
+
+            -- Diagnostics & Trouble
+            { "<leader>d",  group = "Diagnostics & Issues" },
+            { "<leader>dt", desc = "Project Diagnostics (All Files)" },
+            { "<leader>dl", desc = "Current Buffer Diagnostics" },
+            { "<leader>dw", desc = "Project Warnings Only" },
+            { "<leader>de", desc = "Project Errors Only" },
+            { "<leader>ds", desc = "Document Symbols" },
+            { "<leader>dr", desc = "LSP References & Definitions" },
+            { "<leader>dL", desc = "Location List" },
+            { "<leader>dQ", desc = "Quickfix List" },
+            { "<leader>dn", "<cmd>lua vim.diagnostic.goto_next()<cr>",            desc = "Next Diagnostic" },
+            { "<leader>dp", "<cmd>lua vim.diagnostic.goto_prev()<cr>",            desc = "Previous Diagnostic" },
+            { "<leader>df", "<cmd>lua vim.diagnostic.open_float()<cr>",           desc = "Show Diagnostic Details" },
 
             -- Go development
             { "<leader>g",  group = "Go" },
-            { "<leader>gd", vim.lsp.buf.definition,                     desc = "Go to Definition" },
-            { "<leader>gr", vim.lsp.buf.references,                     desc = "Find References" },
-            { "<leader>gi", vim.lsp.buf.implementation,                 desc = "Go to Implementation" },
-            { "<leader>gf", vim.lsp.buf.format,                         desc = "Format Code" },
+            { "<leader>gd", vim.lsp.buf.definition,                               desc = "Go to Definition" },
+            { "<leader>gr", vim.lsp.buf.references,                               desc = "Find References" },
+            { "<leader>gi", vim.lsp.buf.implementation,                           desc = "Go to Implementation" },
+            { "<leader>gf", vim.lsp.buf.format,                                   desc = "Format Code" },
 
             -- Git operations
             { "<leader>G",  group = "Git" },
-            { "<leader>Gs", "<cmd>Neotree git_status<cr>",              desc = "Git Status" },
-            { "<leader>Gb", "<cmd>Telescope git_branches<cr>",          desc = "Git Branches" },
-            { "<leader>Gc", "<cmd>Telescope git_commits<cr>",           desc = "Git Commits" },
+            { "<leader>Gs", "<cmd>Neotree git_status<cr>",                        desc = "Git Status" },
+            { "<leader>Gb", "<cmd>Telescope git_branches<cr>",                    desc = "Git Branches" },
+            { "<leader>Gc", "<cmd>Telescope git_commits<cr>",                     desc = "Git Commits" },
 
             -- Find/Search
             { "<leader>f",  group = "Find" },
-            { "<leader>ff", "<cmd>Telescope find_files<cr>",            desc = "Find Files" },
-            { "<leader>fg", "<cmd>Telescope live_grep<cr>",             desc = "Live Grep" },
-            { "<leader>fb", "<cmd>Telescope buffers<cr>",               desc = "Find Buffers" },
-            { "<leader>fh", "<cmd>Telescope help_tags<cr>",             desc = "Help Tags" },
-            { "<leader>fo", "<cmd>Telescope oldfiles<cr>",              desc = "Recent Files" },
+            { "<leader>ff", "<cmd>Telescope find_files<cr>",                      desc = "Find Files" },
+            { "<leader>fg", "<cmd>Telescope live_grep<cr>",                       desc = "Live Grep" },
+            { "<leader>fb", "<cmd>Telescope buffers<cr>",                         desc = "Find Buffers" },
+            { "<leader>fh", "<cmd>Telescope help_tags<cr>",                       desc = "Help Tags" },
+            { "<leader>fo", "<cmd>Telescope oldfiles<cr>",                        desc = "Recent Files" },
 
             -- Jump operations
             { "<leader>j",  group = "Jump" },
-            { "<leader>je", "'.",                                       desc = "Last Edit" },
-            { "<leader>ji", "'^",                                       desc = "Last Insert" },
-            { "<leader>jb", "<C-o>",                                    desc = "Jump Back" },
-            { "<leader>jf", "<C-i>",                                    desc = "Jump Forward" },
-            { "<leader>jl", "``",                                       desc = "Last Position" },
-            { "<leader>ja", "<C-^>",                                    desc = "Alternate Buffer" },
+            { "<leader>je", "'.",                                                 desc = "Last Edit" },
+            { "<leader>ji", "'^",                                                 desc = "Last Insert" },
+            { "<leader>jb", "<C-o>",                                              desc = "Jump Back" },
+            { "<leader>jf", "<C-i>",                                              desc = "Jump Forward" },
+            { "<leader>jl", "``",                                                 desc = "Last Position" },
+            { "<leader>ja", "<C-^>",                                              desc = "Alternate Buffer" },
             {
                 "<leader>jn",
                 function()
@@ -331,19 +246,40 @@ return {
             -- Toggle operations
             { "<leader>t",  group = "Toggle" },
             { "<leader>tn", desc = "Toggle Notes (Maple)" },
-            { "<leader>tw", "<cmd>set wrap!<cr>",          desc = "Word Wrap" },
-            { "<leader>ts", "<cmd>set spell!<cr>",         desc = "Spell Check" },
-            { "<leader>th", "<cmd>set hlsearch!<cr>",      desc = "Highlight Search" },
+            { "<leader>tw", "<cmd>set wrap!<cr>",                       desc = "Word Wrap" },
+            { "<leader>ts", "<cmd>set spell!<cr>",                      desc = "Spell Check" },
+            { "<leader>th", "<cmd>set hlsearch!<cr>",                   desc = "Highlight Search" },
 
             -- Window operations
             { "<leader>w",  group = "Windows" },
-            { "<leader>wh", "<C-w>h",                      desc = "Move Left" },
-            { "<leader>wj", "<C-w>j",                      desc = "Move Down" },
-            { "<leader>wk", "<C-w>k",                      desc = "Move Up" },
-            { "<leader>wl", "<C-w>l",                      desc = "Move Right" },
-            { "<leader>ws", "<C-w>s",                      desc = "Split Horizontal" },
-            { "<leader>wv", "<C-w>v",                      desc = "Split Vertical" },
-            { "<leader>wc", "<C-w>c",                      desc = "Close Window" },
+            { "<leader>wh", "<C-w>h",                                   desc = "Move Left" },
+            { "<leader>wj", "<C-w>j",                                   desc = "Move Down" },
+            { "<leader>wk", "<C-w>k",                                   desc = "Move Up" },
+            { "<leader>wl", "<C-w>l",                                   desc = "Move Right" },
+            { "<leader>ws", "<C-w>s",                                   desc = "Split Horizontal" },
+            { "<leader>wv", "<C-w>v",                                   desc = "Split Vertical" },
+            { "<leader>wc", "<C-w>c",                                   desc = "Close Window" },
+
+            -- Refactoring & Code Transformation
+            { "<leader>r",  group = "Refactoring & Code Transform" },
+            { "<leader>re", desc = "Extract Function",                  mode = "v" },
+            { "<leader>rf", desc = "Extract to File",                   mode = "v" },
+            { "<leader>rv", desc = "Extract Variable",                  mode = "v" },
+            { "<leader>ri", desc = "Inline Variable",                   mode = { "n", "v" } },
+            { "<leader>rb", desc = "Extract Block",                     mode = "n" },
+            { "<leader>rB", desc = "Extract Block to File",             mode = "n" },
+            { "<leader>rp", desc = "Insert Debug Print",                mode = "n" },
+            { "<leader>rP", desc = "Debug Print Variable",              mode = { "n", "v" } },
+            { "<leader>rc", desc = "Clean Debug Prints",                mode = "n" },
+            { "<leader>rs", desc = "Refactoring Menu",                  mode = { "n", "v" } },
+
+            -- Search & Replace (Global)
+            { "<leader>S",  group = "Search & Replace (Global)" },
+            { "<leader>Ss", desc = "Open Spectre (Global Find/Replace)" },
+            { "<leader>Sw", desc = "Search Current Word (Project)",     mode = { "n", "v" } },
+            { "<leader>Sp", desc = "Search in Current File Only" },
+            { "<leader>Sr", desc = "Replace All in Project" },
+            { "<leader>Sc", desc = "Replace Current Line" },
 
             -- Special keys
             { "<leader>m",  desc = "Toggle Go Struct View" },

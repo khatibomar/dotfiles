@@ -80,6 +80,7 @@ install_system_packages() {
         "lsd"
         "fd-find"
         "hyperfine"
+        "sed"
 
         # Network tools
         "curl"
