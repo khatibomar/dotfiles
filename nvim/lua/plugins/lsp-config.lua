@@ -78,8 +78,6 @@ return {
 					},
 				},
 				on_attach = function(client, bufnr)
-					print("LSP attached: " .. client.name .. " (id: " .. client.id .. ") to buffer " .. bufnr)
-
 					-- Check for duplicate gopls clients
 					local clients = vim.lsp.get_clients({ bufnr = bufnr })
 					local gopls_count = 0
