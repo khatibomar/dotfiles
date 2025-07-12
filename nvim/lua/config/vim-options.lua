@@ -13,6 +13,9 @@ opt.wrap = false
 opt.breakindent = true
 opt.scrolloff = 8
 opt.sidescrolloff = 8
+opt.linebreak = true
+opt.textwidth = 80
+opt.wrap = true
 
 -- Sign column and splits
 opt.signcolumn = "yes"
@@ -184,7 +187,7 @@ api.nvim_create_autocmd("FileType", {
 		vim.bo.tabstop = 4
 		vim.bo.softtabstop = 4
 		vim.bo.shiftwidth = 4
-		vim.bo.textwidth = 100
+		vim.bo.textwidth = 80
 	end,
 })
 
