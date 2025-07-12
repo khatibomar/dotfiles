@@ -122,30 +122,6 @@ local function apply_lsp_diagnostic_signs(diagnostics)
 	})
 end
 
--- Apply Neo-tree styles
-local function apply_neotree_styles(style)
-	require("neo-tree").setup({
-		default_component_configs = {
-			icon = {
-				folder_closed = style.icons.folder_closed,
-				folder_open = style.icons.folder_open,
-				file = style.icons.file,
-				symlink = style.icons.symlink,
-			},
-			diagnostics = {
-				symbols = {
-					error = style.diagnostics.Error,
-					warn = style.diagnostics.Warn,
-					hint = style.diagnostics.Hint,
-					info = style.diagnostics.Info,
-					deprecated = style.diagnostics.Deprecated,
-					trace = style.diagnostics.Trace,
-				},
-			},
-		},
-	})
-end
-
 -- Unified function to apply a style for both LSP and Neo-tree
 local function apply_unified_style(style_name)
 	local style = unified_styles[style_name]
@@ -153,7 +129,6 @@ local function apply_unified_style(style_name)
 		return
 	end
 	apply_lsp_diagnostic_signs(style.diagnostics)
-	apply_neotree_styles(style)
 	save_style(style_name)
 end
 
