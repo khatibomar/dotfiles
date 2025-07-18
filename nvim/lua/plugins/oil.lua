@@ -116,7 +116,6 @@ return {
 
 				-- Close
 				["q"] = "actions.close",
-				["<Esc>"] = "actions.close",
 			},
 			-- Set to false to disable all of the above keymaps
 			use_default_keymaps = true,
