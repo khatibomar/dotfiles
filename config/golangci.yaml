@@ -134,3 +134,15 @@ linters:
 issues:
   max-issues-per-linter: 0 # Report all issues for each linter (no limit)
   max-same-issues: 0 # Report all issues of the same kind (no limit)
+
+# Options for analysis running.
+run:
+  # The mode used to evaluate relative paths.
+  # It's used by exclusions, Go plugins, and some linters.
+  # The value can be:
+  # - `gomod`: the paths will be relative to the directory of the `go.mod` file.
+  # - `gitroot`: the paths will be relative to the git root (the parent directory of `.git`).
+  # - `cfg`: the paths will be relative to the configuration file.
+  # - `wd` (NOT recommended): the paths will be relative to the place where golangci-lint is run.
+  # Default: cfg
+  relative-path-mode: gomod
