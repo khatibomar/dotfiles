@@ -54,10 +54,16 @@
   delete-merged-branches = !git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d
   recent = for-each-ref --sort=-committerdate --format='%(committerdate:relative) %(refname:short) %(objectname:short)' refs/heads
 
+[sendemail]
+	smtpserver = smtp.gmail.com
+	smtpuser = ayn.khatib@gmail.com
+	smtpencryption = ssl
+	smtpserverport = 465
+
 [user]
-  email = elkhatibomar@outlook.com
-  name = khatibomar
-  signingkey = 023BC121E6D0ADEF
+  email = ayn.khatib@gmail.com
+  name = ayn
+  signingkey = 0D2909D6BB710138
   # Use conditional includes for different projects
   [includeIf "gitdir:~/work/"]
     path = ~/work/.gitconfig
