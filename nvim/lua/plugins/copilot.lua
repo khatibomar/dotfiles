@@ -55,7 +55,7 @@ return {
           description = "code review for staged changes",
         },
       },
-      model = "claude-sonnet-4",
+      model = "gpt-4.1",
       auto_follow_cursor = false, -- Don't follow the cursor after getting response
       show_help = false,       -- Show help in virtual text, set to true if that's 1st time using Copilot Chat
       chat_autocomplete = true, -- Enable autocomplete for chat
