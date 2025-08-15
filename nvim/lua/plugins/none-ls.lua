@@ -1,5 +1,11 @@
 return {
 	"nvimtools/none-ls.nvim",
+	dependencies = {
+		{
+			"mason-org/mason.nvim",
+			opts = { ensure_installed = { "gomodifytags", "impl" } },
+		},
+	},
 	config = function()
 		local null_ls = require("null-ls")
 		local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
