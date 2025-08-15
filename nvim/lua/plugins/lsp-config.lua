@@ -9,6 +9,15 @@ local function buildTags()
 	return { "-tags=" }
 end
 
+local common_lsps = {
+	"lua_ls",
+	"clangd",
+	"bashls",
+	"yamlls",
+	"taplo",
+	"buf_ls",
+}
+
 return {
 	{
 		"williamboman/mason.nvim",
@@ -23,14 +32,11 @@ return {
 		lazy = false,
 		config = function()
 			require("mason-lspconfig").setup({
-				ensure_installed = {
-					"lua_ls",
-					"clangd",
-					"bashls",
-					"yamlls",
-					"taplo",
-					"buf_ls",
+				ensure_installed = vim.tbl_extend("force", common_lsps, {
 					-- NOTE: gopls excluded - using system installation
+				}),
+				automatic_enable = {
+					exclude = vim.list_extend(vim.deepcopy(common_lsps), { "gopls" }),
 				},
 				auto_install = false, -- Disable auto install to prevent duplicates
 			})
