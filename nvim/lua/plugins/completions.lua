@@ -1,44 +1,35 @@
 return {
-  {
-    "hrsh7th/cmp-nvim-lsp",
-  },
-  {
-    "L3MON4D3/LuaSnip",
-    dependencies = {
-      "saadparwaiz1/cmp_luasnip",
-      "rafamadriz/friendly-snippets", -- This includes Go snippets as well
-    },
-  },
-  {
-    "hrsh7th/nvim-cmp",
-    config = function()
-      local cmp = require("cmp")
-      require("luasnip.loaders.from_vscode").lazy_load()
-
-      cmp.setup({
-        snippet = {
-          expand = function(args)
-            require("luasnip").lsp_expand(args.body)
-          end,
-        },
-        window = {
-          completion = cmp.config.window.bordered(),
-          documentation = cmp.config.window.bordered(),
-        },
-        mapping = cmp.mapping.preset.insert({
-          ["<C-b>"] = cmp.mapping.scroll_docs(-4),
-          ["<C-f>"] = cmp.mapping.scroll_docs(4),
-          ["<C-Space>"] = cmp.mapping.complete(),
-          ["<C-e>"] = cmp.mapping.abort(),
-          ["<CR>"] = cmp.mapping.confirm({ select = true }),
-        }),
-        sources = cmp.config.sources({
-          { name = "nvim_lsp" }, -- LSP-based autocompletion
-          { name = "luasnip" }, -- For snippets, including Go
-        }, {
-          { name = "buffer" }, -- Buffer-based suggestions
-        }),
-      })
-    end,
-  },
+	"saghen/blink.cmp",
+	dependencies = {
+		{ "samiulsami/cmp-go-deep", dependencies = { "kkharji/sqlite.lua" } },
+		{ "saghen/blink.compat" },
+	},
+	version = "1.*",
+	opts = {
+		completion = { documentation = { auto_show = true } },
+		fuzzy = { implementation = "prefer_rust_with_warning" },
+		keymap = { preset = "enter" },
+		sources = {
+			default = {
+				"go_deep",
+				"lsp",
+				"path",
+				"snippets",
+				"buffer",
+			},
+			providers = {
+				go_deep = {
+					name = "go_deep",
+					module = "blink.compat.source",
+					min_keyword_length = 3,
+					max_items = 5,
+					---@module "cmp_go_deep"
+					---@type cmp_go_deep.Options
+					opts = {
+						-- See below for configuration options
+					},
+				},
+			},
+		},
+	},
 }

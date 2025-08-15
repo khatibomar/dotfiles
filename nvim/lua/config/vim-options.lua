@@ -15,7 +15,6 @@ opt.scrolloff = 8
 opt.sidescrolloff = 8
 opt.linebreak = true
 opt.textwidth = 80
-opt.wrap = true
 
 -- Sign column and splits
 opt.signcolumn = "yes"
