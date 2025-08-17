@@ -135,23 +135,6 @@ return {
 			vim.keymap.set("n", "<leader>gd", vim.lsp.buf.definition, { desc = "Go to Definition" })
 			vim.keymap.set("n", "<leader>gr", vim.lsp.buf.references, { desc = "Go to References" })
 			vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code Action" })
-
-			-- Enhanced LSP mappings with new tools
-			vim.keymap.set("n", "gD", function()
-				require("glance").open("definitions")
-			end, { desc = "Peek Definitions" })
-
-			vim.keymap.set("n", "gR", function()
-				require("glance").open("references")
-			end, { desc = "Peek References" })
-
-			vim.keymap.set("n", "gI", function()
-				require("glance").open("implementations")
-			end, { desc = "Peek Implementations" })
-
-			vim.keymap.set("n", "gy", function()
-				require("glance").open("type_definitions")
-			end, { desc = "Peek Type Definitions" })
 		end,
 	},
 }
