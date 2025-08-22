@@ -1,5 +1,9 @@
 return {
 	{
+		"fatih/vim-go",
+		build = ":GoUpdateBinaries",
+	},
+	{
 		"crusj/structrue-go.nvim",
 		branch = "main",
 		config = function()
