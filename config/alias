@@ -3,7 +3,7 @@ alias vi=nvim
 alias vim=nvim
 alias ls=lsd
 alias la='lsd -la'
-alias cat=bat
+alias cat='bat --style=plain'
 alias t=tmux
 alias tr='tmux source-file $HOME/.tmux.conf'
 alias ta='tmux attach-session'
