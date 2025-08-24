@@ -1,12 +1,14 @@
 [font]
-  size = 14
+  size = 24
   [font.normal]
-    family = "FiraCode Nerd Font"
+    family = "IosevkaTerm Nerd Font"
     style = "Regular"
   [font.bold]
-    family = "FiraCode Nerd Font"
+    family = "IosevkaTerm Nerd Font"
+    style = "Bold"
   [font.italic]
-    family = "FiraCode Nerd Font"
+    family = "IosevkaTerm Nerd Font"
+    style = "Italic"
 
 # Alacritty configuration file
 
