@@ -14,6 +14,3 @@ source $HOME/.alias
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 eval "$(tmuxifier init -)"
-
-# Enhanced Git workflow functions
-[ -f ~/.local/bin/git_functions.sh ] && source ~/.local/bin/git_functions.sh

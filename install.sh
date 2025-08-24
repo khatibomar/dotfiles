@@ -12,8 +12,7 @@ main_menu() {
 		echo "4) Backup & copy Scripts"
 		echo "5) Import GPG keys"
 		echo "6) Import SSH keys"
-		echo "7) Install Git enhancement tools"
-		echo "8) Run ALL steps"
+		echo "7) Run ALL steps"
 		echo "0) Exit"
 		echo "======================"
 		echo ""
@@ -34,14 +33,6 @@ main_menu() {
 		5) bash "$SCRIPT_DIR/import_gpg_keys.sh" ;;
 		6) bash "$SCRIPT_DIR/import_ssh_keys.sh" ;;
 		7)
-			echo "Installing Git enhancement tools..."
-			mkdir -p ~/.local/bin
-			cp bin/git_functions.sh ~/.local/bin/ 2>/dev/null || true
-			chmod +x ~/.local/bin/git-* ~/.local/bin/git_functions.sh 2>/dev/null || true
-			echo "Git enhancement tools installed to ~/.local/bin/"
-			echo "Shell functions are enabled and ready to use in zsh sessions"
-			;;
-		8)
 			echo "Running ALL steps..."
 			source ./scripts/install_apps.sh
 			main
@@ -50,10 +41,6 @@ main_menu() {
 			bash "$SCRIPT_DIR/install_scripts.sh"
 			bash "$SCRIPT_DIR/import_gpg_keys.sh"
 			bash "$SCRIPT_DIR/import_ssh_keys.sh"
-			mkdir -p ~/.local/bin
-			cp bin/git_functions.sh ~/.local/bin/ 2>/dev/null || true
-			chmod +x ~/.local/bin/git-* ~/.local/bin/git_functions.sh 2>/dev/null || true
-			echo "Git enhancement tools installed to ~/.local/bin/"
 			;;
 		0)
 			echo "Exiting..."

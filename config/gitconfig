@@ -88,32 +88,28 @@
   quotepath = false
 
 [diff]
-  tool = nvimdiff
-  algorithm = histogram
-  renames = true
-  mnemonicprefix = true
-  colorMoved = default
-  colorMovedWS = allow-indentation-change
+  tool = kdiff3
 
 [difftool]
   prompt = false
-  guiDefault = false
+  keepBackup = false
+  trustExitCode = false
 
-[difftool "nvimdiff"]
-  cmd = $HOME/.local/bin/git-nvimdiff diff \"$LOCAL\" \"$REMOTE\"
+[difftool "kdiff3"]
+  path = /bin/kdiff3
 
 [merge]
-  tool = meld
+  tool = kdiff3
   conflictstyle = zdiff3
   autoStash = true
 
 [mergetool]
-  keepBackup = false
   prompt = false
+  keepBackup = false
+  keepTemporaries = false
 
-[mergetool "meld"]
-  cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
-  trustExitCode = true
+[mergetool "kdiff3"]
+  path = /bin/kdiff3
 
 [delta]
   navigate = true
