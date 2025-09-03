@@ -36,8 +36,8 @@ opt.fillchars = { eob = " " }
 -- Minimal list characters
 opt.list = true
 opt.listchars = {
-	tab = "│ ",
-	trail = "·",
+  tab = "│ ",
+  trail = "·",
 }
 
 -- =====================================================
@@ -84,6 +84,8 @@ opt.smartcase = true
 opt.hlsearch = true
 opt.incsearch = true
 opt.path = ".,,**"
+vim.opt.wildmenu = true
+vim.opt.wildmode = "noselect:longest,full"
 
 -- =====================================================
 -- COMPLETION
@@ -122,50 +124,50 @@ vim.api.nvim_set_hl(0, "BlinkCmpMenuSelection", { fg = "#ffffff", bg = "#5c8f5c"
 
 -- Don't auto comment new lines
 api.nvim_create_autocmd("BufEnter", {
-	command = [[set formatoptions-=cro]],
+  command = [[set formatoptions-=cro]],
 })
 
 -- Auto-reload files
 api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
-	callback = function()
-		vim.cmd("checktime")
-	end,
+  callback = function()
+    vim.cmd("checktime")
+  end,
 })
 
 -- Highlight yanked text briefly
 api.nvim_create_autocmd("TextYankPost", {
-	callback = function()
-		vim.highlight.on_yank({ timeout = 150 })
-	end,
+  callback = function()
+    vim.highlight.on_yank({ timeout = 150 })
+  end,
 })
 
 -- Spell check for text files
 api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-	pattern = { "*.txt", "*.md", "*.tex" },
-	callback = function()
-		opt.spell = true
-		opt.spelllang = "en_us"
-	end,
+  pattern = { "*.txt", "*.md", "*.tex" },
+  callback = function()
+    opt.spell = true
+    opt.spelllang = "en_us"
+  end,
 })
 
 -- Clean trailing whitespace on save
 api.nvim_create_autocmd("BufWritePre", {
-	callback = function()
-		local save_cursor = vim.fn.getpos(".")
-		vim.cmd([[%s/\s\+$//e]])
-		vim.fn.setpos(".", save_cursor)
-	end,
+  callback = function()
+    local save_cursor = vim.fn.getpos(".")
+    vim.cmd([[%s/\s\+$//e]])
+    vim.fn.setpos(".", save_cursor)
+  end,
 })
 
 -- Restore cursor position
 api.nvim_create_autocmd("BufReadPost", {
-	callback = function(args)
-		local valid_line = vim.fn.line([['"]]) >= 1 and vim.fn.line([['"]]) < vim.fn.line("$")
-		local not_commit = vim.b[args.buf].filetype ~= "commit"
-		if valid_line and not_commit then
-			vim.cmd([[normal! g`"]])
-		end
-	end,
+  callback = function(args)
+    local valid_line = vim.fn.line([['"]]) >= 1 and vim.fn.line([['"]]) < vim.fn.line("$")
+    local not_commit = vim.b[args.buf].filetype ~= "commit"
+    if valid_line and not_commit then
+      vim.cmd([[normal! g`"]])
+    end
+  end,
 })
 
 -- =====================================================
@@ -174,22 +176,22 @@ api.nvim_create_autocmd("BufReadPost", {
 
 -- Go file detection
 vim.filetype.add({
-	extension = {
-		gotmpl = "go",
-	},
+  extension = {
+    gotmpl = "go",
+  },
 })
 
 -- Go-specific settings
 api.nvim_create_autocmd("FileType", {
-	pattern = { "go", "gomod", "gowork", "gotmpl" },
-	callback = function()
-		-- Go uses tabs
-		vim.bo.expandtab = false
-		vim.bo.tabstop = 4
-		vim.bo.softtabstop = 4
-		vim.bo.shiftwidth = 4
-		vim.bo.textwidth = 80
-	end,
+  pattern = { "go", "gomod", "gowork", "gotmpl" },
+  callback = function()
+    -- Go uses tabs
+    vim.bo.expandtab = false
+    vim.bo.tabstop = 4
+    vim.bo.softtabstop = 4
+    vim.bo.shiftwidth = 4
+    vim.bo.textwidth = 80
+  end,
 })
 
 -- =====================================================
@@ -197,19 +199,19 @@ api.nvim_create_autocmd("FileType", {
 -- =====================================================
 
 vim.diagnostic.config({
-	virtual_text = false, -- No inline diagnostics - visual distraction
-	signs = true,
-	underline = true,
-	update_in_insert = false,
-	severity_sort = true,
-	float = {
-		focusable = false,
-		style = "minimal",
-		border = "rounded",
-		source = "always",
-		header = "",
-		prefix = "",
-	},
+  virtual_text = false, -- No inline diagnostics - visual distraction
+  signs = true,
+  underline = true,
+  update_in_insert = false,
+  severity_sort = true,
+  float = {
+    focusable = false,
+    style = "minimal",
+    border = "rounded",
+    source = "always",
+    header = "",
+    prefix = "",
+  },
 })
 
 -- =====================================================
@@ -224,6 +226,6 @@ vim.g.loaded_node_provider = 0
 
 -- Better grep if available
 if vim.fn.executable("rg") == 1 then
-	opt.grepprg = "rg --vimgrep --smart-case"
-	opt.grepformat = "%f:%l:%c:%m"
+  opt.grepprg = "rg --vimgrep --smart-case"
+  opt.grepformat = "%f:%l:%c:%m"
 end
