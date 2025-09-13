@@ -101,6 +101,7 @@ install_system_packages() {
 		"python3-pip"
 		"lua"
 		"luarocks"
+		"psql"
 
 		# Build tools
 		"gcc"
