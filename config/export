@@ -8,3 +8,4 @@ export BAT_THEME=gruvbox-light
 export PATH="$HOME/.tmuxifier/bin:$PATH"
 export EDITOR=nvim
 export PATH="$HOME/.npm-global/bin:$PATH"
+export LIBVIRT_DEFAULT_URI='qemu:///system'
