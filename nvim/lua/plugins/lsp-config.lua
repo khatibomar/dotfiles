@@ -11,7 +11,6 @@ end
 
 local common_lsps = {
 	"lua_ls",
-	"clangd",
 	"bashls",
 	"yamlls",
 	"taplo",
@@ -47,18 +46,9 @@ return {
 		dependencies = { "saghen/blink.cmp" },
 		config = function()
 			local capabilities = require("blink.cmp").get_lsp_capabilities()
-			local lspconfig = require("lspconfig")
-
-			-- Setup for Clangd language server
-			lspconfig.clangd.setup({
-				capabilities = capabilities,
-				cmd = { "clangd", "--background-index" },
-				filetypes = { "c", "cpp", "objc", "objcpp" },
-				root_dir = lspconfig.util.root_pattern("compile_commands.json", "compile_flags.txt", ".git"),
-			})
 
 			-- Setup for Go language server (using system gopls, not Mason)
-			lspconfig.gopls.setup({
+			vim.lsp.config("gopls", {
 				capabilities = capabilities,
 				cmd = { "gopls" }, -- Use gopls from PATH
 				single_file_support = true,
@@ -72,7 +62,7 @@ return {
 			})
 
 			-- YAML server custom setup (has special codegen.yaml handling)
-			lspconfig.yamlls.setup({
+			vim.lsp.config("yamlls", {
 				capabilities = capabilities,
 				on_attach = function(client, _)
 					-- Check if the current buffer is a codegen.yaml or codegen.yml
@@ -102,7 +92,7 @@ return {
 			})
 
 			-- Lua language server custom setup (needs special Neovim configuration)
-			lspconfig.lua_ls.setup({
+			vim.lsp.config("lua_ls", {
 				capabilities = capabilities,
 				settings = {
 					Lua = {
