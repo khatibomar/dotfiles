@@ -5,7 +5,11 @@ source $HOME/.export
 [ -f $HOME/work/.export ] && source $HOME/work/.export
 
 source $ZSH/oh-my-zsh.sh
-[ -f $HOME/.fzf.zsh ] && source $HOME/.fzf.zsh
+
+# Set up fzf key bindings and fuzzy completion
+if command -v fzf >/dev/null; then
+    source <(fzf --zsh)
+fi
 
 source $HOME/.alias
 
