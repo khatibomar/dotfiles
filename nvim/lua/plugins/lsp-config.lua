@@ -60,6 +60,7 @@ return {
 					},
 				},
 			})
+			vim.lsp.enable("gopls")
 
 			-- YAML server custom setup (has special codegen.yaml handling)
 			vim.lsp.config("yamlls", {
@@ -90,6 +91,7 @@ return {
 					},
 				},
 			})
+			vim.lsp.enable("yamlls")
 
 			-- Lua language server custom setup (needs special Neovim configuration)
 			vim.lsp.config("lua_ls", {
@@ -115,6 +117,7 @@ return {
 					},
 				},
 			})
+			vim.lsp.enable("lua_ls")
 
 			-- Keymaps for LSP functionality
 			vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
