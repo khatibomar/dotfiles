@@ -11,3 +11,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 export LIBVIRT_DEFAULT_URI='qemu:///system'
 export MANPAGER='nvim +Man!'
 export DISABLE_UPDATE_PROMPT=true # auto update oh-my-zsh
+
+# Plan9port environment
+export PLAN9=/usr/local/plan9
+export PATH=$PATH:$PLAN9/bin
