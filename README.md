@@ -31,6 +31,7 @@ https://github.com/aristocratos/btop <br/>
 https://github.com/jstemmer/gotags <br />
 https://golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment <br />
 https://github.com/golangci/golangci-lint <br />
+https://opencode.ai <br />
 
 # Install
 
@@ -44,4 +45,3 @@ and place the real private key inside then run the script<br/>
 # Sources
 
 https://github.com/cpow/neovim-for-newbs <br/>
-Chatgpt :)

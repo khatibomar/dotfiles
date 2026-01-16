@@ -1,0 +1,74 @@
+{
+  "theme": "dark",
+  "keybinds": "default",
+  "providers": {
+    "opencode": {
+      "enabled": true
+    },
+    "openai": {
+      "enabled": false,
+      "apiKey": ""
+    },
+    "anthropic": {
+      "enabled": false,
+      "apiKey": ""
+    }
+  },
+  "tools": {
+    "bash": {
+      "enabled": true,
+      "timeout": 120000
+    },
+    "edit": {
+      "enabled": true
+    },
+    "read": {
+      "enabled": true
+    },
+    "write": {
+      "enabled": true
+    },
+    "grep": {
+      "enabled": true
+    },
+    "glob": {
+      "enabled": true
+    }
+  },
+  "lsp": {
+    "enabled": true,
+    "servers": {
+      "lua": {
+        "command": "lua-language-server",
+        "args": ["--stdio"]
+      },
+      "bash": {
+        "command": "bash-language-server",
+        "args": ["start"]
+      },
+      "go": {
+        "command": "gopls",
+        "args": ["serve"]
+      }
+    }
+  },
+  "formatters": {
+    "lua": {
+      "command": "stylua",
+      "args": ["--search-directories", "."]
+    },
+    "bash": {
+      "command": "shfmt",
+      "args": ["-w", "-"]
+    },
+    "go": {
+      "command": "gofmt",
+      "args": ["-w"]
+    }
+  },
+  "permissions": {
+    "allowNetwork": false,
+    "allowFileSystem": true,
+    "allowExecution": true
+  }
+}

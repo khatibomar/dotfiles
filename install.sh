@@ -12,7 +12,8 @@ main_menu() {
 		echo "4) Backup & copy Scripts"
 		echo "5) Import GPG keys"
 		echo "6) Import SSH keys"
-		echo "7) Run ALL steps"
+		echo "7) Install OpenCode AI Assistant"
+		echo "8) Run ALL steps"
 		echo "0) Exit"
 		echo "======================"
 		echo ""
@@ -32,7 +33,8 @@ main_menu() {
 		4) bash "$SCRIPT_DIR/install_scripts.sh" ;;
 		5) bash "$SCRIPT_DIR/import_gpg_keys.sh" ;;
 		6) bash "$SCRIPT_DIR/import_ssh_keys.sh" ;;
-		7)
+		7) bash ./scripts/install_opencode.sh ;;
+		8)
 			echo "Running ALL steps..."
 			source ./scripts/install_apps.sh
 			main
@@ -41,6 +43,7 @@ main_menu() {
 			bash "$SCRIPT_DIR/install_scripts.sh"
 			bash "$SCRIPT_DIR/import_gpg_keys.sh"
 			bash "$SCRIPT_DIR/import_ssh_keys.sh"
+			bash ./scripts/install_opencode.sh
 			;;
 		0)
 			echo "Exiting..."
