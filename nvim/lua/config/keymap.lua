@@ -30,11 +30,7 @@ k.set("n", "<leader>gd", vim.lsp.buf.definition, opts)
 k.set("n", "<leader>gr", vim.lsp.buf.references, opts)
 k.set("n", "<leader>gi", vim.lsp.buf.implementation, opts)
 
--- command palette
-k.set("n", "<leader>c", function()
-  require("config.command-palette").open()
-end, vim.tbl_extend("force", opts, { desc = "Command Palette" }))
-k.set({ "n", "i" }, "<C-s-p>", function()
+k.set({ "n", "i" }, "<C-p>", function()
   require("config.command-palette").open()
 end, vim.tbl_extend("force", opts, { desc = "Command Palette" }))
 
