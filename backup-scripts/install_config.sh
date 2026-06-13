@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("alacritty.toml" "htoprc" "mpv.conf")
+EXCLUDED_FILES=("htoprc" "mpv.conf")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -46,17 +46,6 @@ if [ -d "$CONFIG_DIR" ]; then
 		echo "Copying the new $base_name to $OLD_FILE"
 		cp -r "$item" "$OLD_FILE"
 	done
-else
-	echo "Error: Config directory $CONFIG_DIR does not exist."
-	exit 1
-fi
-
-# Handle alacritty.toml separately
-if [ -f "$CONFIG_DIR/alacritty.toml" ]; then
-	ALACRITTY_DIR="$HOME/.config/alacritty"
-	mkdir -p "$ALACRITTY_DIR" # Create the alacritty directory if it doesn't exist
-	echo "Copying alacritty.toml to $ALACRITTY_DIR/alacritty.toml"
-	cp "$CONFIG_DIR/alacritty.toml" "$ALACRITTY_DIR/alacritty.toml"
 else
 	echo "Error: Config directory $CONFIG_DIR does not exist."
 	exit 1

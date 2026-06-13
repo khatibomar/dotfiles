@@ -60,7 +60,7 @@ install_system_packages() {
 		# Shell and terminal
 		"zsh"
 		"tmux"
-		"alacritty"
+		"konsole"
 
 		# Editors
 		"neovim"
