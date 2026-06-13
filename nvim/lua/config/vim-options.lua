@@ -109,7 +109,7 @@ opt.foldcolumn = "0" -- No fold column visual distraction
 -- COLORSCHEME
 -- =====================================================
 
-vim.cmd([[colorscheme leaf-light]])
+vim.cmd([[colorscheme gruber-darker]])
 
 -- Minimal highlighting - no distractions
 vim.cmd([[
