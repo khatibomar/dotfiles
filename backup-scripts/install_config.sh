@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("htoprc" "mpv.conf")
+EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -68,6 +68,27 @@ if [ -f "$CONFIG_DIR/mpv.conf" ]; then
 	mkdir -p "$MPV_DIR" # Create the alacritty directory if it doesn't exist
 	echo "Copying mpv to $MPV_DIR/mpv.conf"
 	cp "$CONFIG_DIR/mpv.conf" "$MPV_DIR/mpv.conf"
+else
+	echo "Error: Config directory $CONFIG_DIR does not exist."
+	exit 1
+fi
+
+# Handle konsole profiles
+if [ -d "$CONFIG_DIR/konsole" ]; then
+	KONSOLE_DIR="$HOME/.local/share/konsole"
+	mkdir -p "$KONSOLE_DIR"
+	echo "Copying konsole profiles to $KONSOLE_DIR"
+	cp -r "$CONFIG_DIR/konsole"/* "$KONSOLE_DIR/"
+else
+	echo "No konsole config directory found. Skipping."
+fi
+
+# Handle konsolerc (set Ayn as default Konsole profile)
+if [ -f "$CONFIG_DIR/konsolerc" ]; then
+	KONSOLERC_DIR="$HOME/.config"
+	mkdir -p "$KONSOLERC_DIR"
+	echo "Copying konsolerc to $KONSOLERC_DIR/konsolerc"
+	cp "$CONFIG_DIR/konsolerc" "$KONSOLERC_DIR/konsolerc"
 else
 	echo "Error: Config directory $CONFIG_DIR does not exist."
 	exit 1
