@@ -1,9 +1,20 @@
 return {
 	{
-		"blazkowolf/gruber-darker.nvim",
+		"khatibomar/gopher.nvim",
 		priority = 1000,
-		init = function()
-			vim.cmd.colorscheme("gruber-darker")
+		config = function()
+			require("gopher").setup({
+				theme = "dark",
+				transparent = false,
+				italics = {
+					comments = true,
+					keywords = false,
+					functions = false,
+					strings = false,
+					variables = false,
+				},
+			})
+			require("gopher").colorscheme()
 		end,
 	},
 	{
