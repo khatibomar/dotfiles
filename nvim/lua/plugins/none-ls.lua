@@ -80,8 +80,6 @@ return {
                 vim.fn.jobstart({
                   "go",
                   "build",
-                  "-gcflags=-N -l",
-                  "-ldflags=-compressdwarf=false",
                   "-o",
                   temp_binary,
                   package_path,
