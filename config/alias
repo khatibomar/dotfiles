@@ -17,3 +17,5 @@ alias ytdlp='yt-dlp --format "bv+ba/best" --merge-output-format mp4 --embed-meta
 alias top=btop
 alias htop=btop
 alias stopwatch='start=$(date +%s%3N); while true; do now=$(date +%s%3N); elapsed=$((now - start)); printf "\r%02d:%02d:%02d.%03d" $((elapsed/3600000)) $((elapsed%3600000/60000)) $((elapsed%60000/1000)) $((elapsed%1000)); sleep 0.01; done'
+alias open=xdg-open
+alias o=xdg-open
