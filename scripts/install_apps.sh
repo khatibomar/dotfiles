@@ -36,6 +36,35 @@ check_fedora() {
 	print_success "Detected Fedora Linux"
 }
 
+# Configure DNF for faster downloads
+configure_dnf() {
+	print_header "Configuring DNF"
+	
+	local dnf_conf="/etc/dnf/dnf.conf"
+	print_info "Optimizing DNF configuration..."
+	
+	local settings=(
+		"fastestmirror=True"
+		"max_parallel_downloads=10"
+		"gpgcheck=True"
+		"installonly_limit=3"
+		"clean_requirements_on_remove=True"
+		"best=False"
+		"skip_if_unavailable=True"
+	)
+
+	for setting in "${settings[@]}"; do
+		local key="${setting%%=*}"
+		if grep -q "^${key}=" "$dnf_conf" 2>/dev/null; then
+			sudo sed -i "s/^${key}=.*/${setting}/" "$dnf_conf"
+		else
+			echo "${setting}" | sudo tee -a "$dnf_conf" > /dev/null
+		fi
+	done
+
+	print_success "DNF configuration optimized"
+}
+
 # Install system packages via DNF
 install_system_packages() {
 	print_header "Installing System Packages"
@@ -426,17 +455,18 @@ main() {
 
 	while true; do
 		echo "Select an option:"
-		echo "1) Install system packages"
-		echo "2) Install languages"
-		echo "3) Install Oh My Zsh"
-		echo "4) Install tmux tools"
-		echo "5) Install Node.js tools"
-		echo "6) Install Go tools"
-		echo "7) Install Python tools"
-		echo "8) Install fonts"
-		echo "9) Install optional apps"
-		echo "10) Configure services"
-		echo "11) Run ALL steps"
+		echo "1) Configure DNF (fast mirrors)"
+		echo "2) Install system packages"
+		echo "3) Install languages"
+		echo "4) Install Oh My Zsh"
+		echo "5) Install tmux tools"
+		echo "6) Install Node.js tools"
+		echo "7) Install Go tools"
+		echo "8) Install Python tools"
+		echo "9) Install fonts"
+		echo "10) Install optional apps"
+		echo "11) Configure services"
+		echo "12) Run ALL steps"
 		echo "0) Exit"
 		echo ""
 
@@ -444,18 +474,20 @@ main() {
 		echo ""
 
 		case $choice in
-		1) check_fedora && install_system_packages ;;
-		2) install_languages ;;
-		3) install_oh_my_zsh ;;
-		4) install_tmux_tools ;;
-		5) install_nodejs_tools ;;
-		6) install_go_tools ;;
-		7) install_python_tools ;;
-		8) install_fonts ;;
-		9) install_optional_apps ;;
-		10) configure_services ;;
-		11)
+		1) check_fedora && configure_dnf ;;
+		2) check_fedora && install_system_packages ;;
+		3) install_languages ;;
+		4) install_oh_my_zsh ;;
+		5) install_tmux_tools ;;
+		6) install_nodejs_tools ;;
+		7) install_go_tools ;;
+		8) install_python_tools ;;
+		9) install_fonts ;;
+		10) install_optional_apps ;;
+		11) configure_services ;;
+		12)
 			check_fedora
+			configure_dnf
 			install_system_packages
 			install_languages
 			install_oh_my_zsh
