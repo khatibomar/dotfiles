@@ -7,7 +7,7 @@ Personal dotfiles for Linux/macOS. This is not a buildable project — configs a
 ## Install
 
 - Run `./install.sh` for an interactive menu (Fedora apps, nvim, config, scripts, GPG, SSH, wallpaper, OpenCode).
-- **Do not run non-interactively** — options 1 and 9 launch menus or multi-step installers.
+- **Do not run non-interactively** — options 1 and 10 launch menus or multi-step installers.
 - Backup dirs `~/.config-backup-*` are created on each run; remove with `./clean.sh`.
 
 ## Key structure
