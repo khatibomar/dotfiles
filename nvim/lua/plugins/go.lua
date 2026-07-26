@@ -1,7 +1,20 @@
 return {
 	{
-		"fatih/vim-go",
-		build = ":GoUpdateBinaries",
+		"ray-x/go.nvim",
+		dependencies = {
+			"ray-x/guihua.lua",
+			"neovim/nvim-lspconfig",
+			"nvim-treesitter/nvim-treesitter",
+		},
+		config = function()
+			require("go").setup({
+				lsp_cfg = false, -- Using your existing gopls setup in lsp-config.lua
+				lsp_keymaps = false, -- Relying on your existing LSP keymaps
+				fmt_autosave = false, -- Using your existing format-on-save in none-ls.lua
+			})
+		end,
+		ft = { "go", "gomod" },
+		build = ':lua require("go.install").update_all_sync()',
 	},
 	{
 		"crusj/structrue-go.nvim",
