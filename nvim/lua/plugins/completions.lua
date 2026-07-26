@@ -7,6 +7,11 @@ return {
 	},
 	version = "1.*",
 	opts = {
+		enabled = function()
+			return not vim.tbl_contains({ "snacks_picker_input", "snacks_input" }, vim.bo.filetype)
+				and vim.bo.buftype ~= "prompt"
+				and vim.b.completion ~= false
+		end,
 		appearance = {
 			highlight_ns = vim.api.nvim_create_namespace("blink_cmp"),
 			-- Sets the fallback highlight groups to nvim-cmp's highlight groups
