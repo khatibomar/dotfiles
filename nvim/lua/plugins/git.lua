@@ -29,6 +29,24 @@ return {
 	},
 	{
 		"sindrets/diffview.nvim",
+		config = function()
+			require("diffview").setup({
+				hooks = {
+					view_opened = function(view)
+						local lib = require("diffview.lib")
+						local views_to_close = {}
+						for _, v in ipairs(lib.views) do
+							if v ~= view then
+								table.insert(views_to_close, v)
+							end
+						end
+						for _, v in ipairs(views_to_close) do
+							v:close()
+						end
+					end,
+				},
+			})
+		end,
 		keys = {
 			{ "<leader>dv", "<cmd>DiffviewOpen<CR>", desc = "Open Diffview" },
 			{ "<leader>dc", "<cmd>DiffviewClose<CR>", desc = "Close Diffview" },
