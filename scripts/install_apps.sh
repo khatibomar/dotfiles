@@ -51,6 +51,7 @@ configure_dnf() {
 		"clean_requirements_on_remove=True"
 		"best=False"
 		"skip_if_unavailable=True"
+		"throttle=250k"
 	)
 
 	for setting in "${settings[@]}"; do
@@ -116,6 +117,7 @@ install_system_packages() {
 		"wget"
 		"openssh-clients"
 		"openssh-server"
+		"dnf-automatic"
 
 		# Compression and archives
 		"unzip"
@@ -430,22 +432,79 @@ install_optional_apps() {
 	fi
 }
 
-# Configure system services
-configure_services() {
-	print_header "Configuring Services"
+# Configure system services individually
 
-	# Enable SSH
+configure_ssh_service() {
+	print_info "Configuring SSH service..."
 	if systemctl list-unit-files | grep -q sshd.service; then
-		sudo systemctl enable --now sshd
+		sudo systemctl enable --now sshd &>/dev/null
 		print_success "SSH service enabled and started"
+	else
+		print_error "SSH service not found"
 	fi
+}
 
-	# Configure firewall for SSH if firewalld is running
-	if systemctl is-active --quiet firewalld; then
-		sudo firewall-cmd --permanent --add-service=ssh
-		sudo firewall-cmd --reload
-		print_success "Firewall configured for SSH"
+configure_dnf_automatic_service() {
+	print_info "Configuring dnf-automatic..."
+	if command -v dnf-automatic &>/dev/null; then
+		if grep -q "^apply_updates = no" /etc/dnf/automatic.conf 2>/dev/null; then
+			sudo sed -i 's/^apply_updates = no/apply_updates = yes/' /etc/dnf/automatic.conf
+		elif ! grep -q "^apply_updates = yes" /etc/dnf/automatic.conf 2>/dev/null; then
+			echo "apply_updates = yes" | sudo tee -a /etc/dnf/automatic.conf > /dev/null
+		fi
+		sudo systemctl enable --now dnf-automatic-install.timer &>/dev/null
+		print_success "dnf-automatic enabled and started"
+	else
+		print_error "dnf-automatic is not installed. Please run 'Install system packages' first."
 	fi
+}
+
+configure_firewall_ssh() {
+	print_info "Configuring firewall for SSH..."
+	if systemctl is-active --quiet firewalld; then
+		sudo firewall-cmd --permanent --add-service=ssh &>/dev/null
+		sudo firewall-cmd --reload &>/dev/null
+		print_success "Firewall configured for SSH"
+	else
+		print_info "firewalld is not active, skipping firewall configuration"
+	fi
+}
+
+configure_all_services() {
+	print_header "Configuring All Services"
+	configure_ssh_service
+	configure_dnf_automatic_service
+	configure_firewall_ssh
+}
+
+configure_services_menu() {
+	print_header "Services Configuration Menu"
+	
+	while true; do
+		echo "Select a service to configure:"
+		echo "1) Enable SSH service"
+		echo "2) Configure dnf-automatic (auto-updates)"
+		echo "3) Configure firewall for SSH"
+		echo "4) Configure ALL services"
+		echo "0) Return to main menu"
+		echo ""
+
+		read -rp "Enter your choice: " srv_choice
+		echo ""
+
+		case $srv_choice in
+		1) configure_ssh_service ;;
+		2) configure_dnf_automatic_service ;;
+		3) configure_firewall_ssh ;;
+		4) configure_all_services ;;
+		0)
+			print_info "Returning to main menu..."
+			break
+			;;
+		*) print_error "Invalid option, please try again." ;;
+		esac
+		echo ""
+	done
 }
 
 main() {
@@ -484,7 +543,7 @@ main() {
 		8) install_python_tools ;;
 		9) install_fonts ;;
 		10) install_optional_apps ;;
-		11) configure_services ;;
+		11) configure_services_menu ;;
 		12)
 			check_fedora
 			configure_dnf
@@ -497,7 +556,7 @@ main() {
 			install_python_tools
 			install_fonts
 			install_optional_apps
-			configure_services
+			configure_all_services
 			;;
 		0)
 			print_info "Exiting..."
