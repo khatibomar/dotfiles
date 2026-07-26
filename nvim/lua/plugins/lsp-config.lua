@@ -52,6 +52,19 @@ return {
 				capabilities = capabilities,
 				cmd = { "gopls" }, -- Use gopls from PATH
 				single_file_support = true,
+				root_dir = function(bufnr, on_dir)
+					local bufname = vim.api.nvim_buf_get_name(bufnr)
+					-- Ignore buffers with non-file URI schemes (e.g., diffview://, fugitive://)
+					if bufname:match("^%a+://") then
+						return
+					end
+					local root = vim.fs.root(bufnr, { "go.work", "go.mod", ".git" })
+					if root then
+						on_dir(root)
+					else
+						on_dir(vim.fs.dirname(bufname))
+					end
+				end,
 				settings = {
 					gopls = {
 						buildFlags = buildTags(),
