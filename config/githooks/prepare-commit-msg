@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Auto-append the commit template when using 'git commit -m'
+if [ "$2" = "message" ]; then
+  TEMPLATE=$(git config commit.template)
+  if [ -n "$TEMPLATE" ]; then
+    # Expand ~ to $HOME
+    TEMPLATE="${TEMPLATE/#\~/$HOME}"
+    if [ -f "$TEMPLATE" ]; then
+      COMMENT_CHAR=$(git config core.commentChar || echo "#")
+      echo "" >> "$1"
+      # Append the template but ignore commented lines
+      grep -v "^${COMMENT_CHAR}" "$TEMPLATE" >> "$1"
+    fi
+  fi
+fi
