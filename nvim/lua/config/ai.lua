@@ -1,17 +1,6 @@
 local M = {}
 
--- Define the default AI agent globally if not already set
-if vim.g.default_ai_agent == nil then
-  vim.g.default_ai_agent = vim.env.AI_AGENT or "agy"
-end
 
--- Configuration for available AI agents
--- You can add or modify the CLI commands here
-M.agents = {
-  agy = "agy",
-  openai = "openai",
-  claude = "claude",
-}
 
 local win_id = nil
 local buf_id = nil
@@ -47,7 +36,7 @@ function M.toggle_agent()
 
   open_split_win()
   
-  local agent_cmd = M.agents[vim.g.default_ai_agent] or vim.g.default_ai_agent
+  local agent_cmd = vim.env.AI_AGENT or "agy"
   
   vim.fn.termopen(agent_cmd, {
     on_exit = function()
@@ -63,34 +52,10 @@ function M.toggle_agent()
 end
 
 function M.setup()
-  -- User command to launch the agent
-  vim.api.nvim_create_user_command("AI", function()
-    M.toggle_agent()
-  end, { desc = "Toggle default AI CLI Agent" })
-
   -- Keymap to toggle the AI agent
   vim.keymap.set("n", "<leader>a", function()
     M.toggle_agent()
   end, { noremap = true, silent = true, desc = "Toggle AI Agent" })
-  
-  -- Command to change the default agent on the fly
-  vim.api.nvim_create_user_command("AISetAgent", function(opts)
-    local agent = opts.args
-    if agent and agent ~= "" then
-      vim.g.default_ai_agent = agent
-      vim.notify("Default AI agent set to: " .. agent, vim.log.levels.INFO)
-    end
-  end, { 
-    nargs = 1,
-    complete = function()
-      local keys = {}
-      for k, _ in pairs(M.agents) do
-        table.insert(keys, k)
-      end
-      return keys
-    end,
-    desc = "Set default AI Agent" 
-  })
 end
 
 return M
