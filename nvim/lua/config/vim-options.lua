@@ -111,11 +111,7 @@ opt.foldcolumn = "0" -- No fold column visual distraction
 
 vim.cmd([[colorscheme tsoding]])
 
--- Minimal highlighting - no distractions
-vim.cmd([[
-  highlight Whitespace guifg=#C8E4CB gui=nocombine
-  highlight NonText guifg=#C8E4CB gui=nocombine
-]])
+
 vim.api.nvim_set_hl(0, "BlinkCmpMenuSelection", { fg = "#ffffff", bg = "#5c8f5c", bold = true }) -- blink select color
 
 -- =====================================================
