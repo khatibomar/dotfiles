@@ -153,6 +153,9 @@ api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 -- Clean trailing whitespace on save
 api.nvim_create_autocmd("BufWritePre", {
   callback = function()
+    if not vim.bo.modifiable then
+      return
+    end
     local save_cursor = vim.fn.getpos(".")
     vim.cmd([[%s/\s\+$//e]])
     vim.fn.setpos(".", save_cursor)
