@@ -109,7 +109,7 @@ opt.foldcolumn = "0" -- No fold column visual distraction
 -- COLORSCHEME
 -- =====================================================
 
-vim.cmd([[colorscheme gopher]])
+vim.cmd([[colorscheme tsoding]])
 
 -- Minimal highlighting - no distractions
 vim.cmd([[
