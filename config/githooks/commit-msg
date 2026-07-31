@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Reject commits whose subject line doesn't start with an uppercase letter.
+# Conventional Commit prefixes (e.g. "feat:", "fix(scope)!:") are stripped
+# first, so the check applies to the first non-whitespace character after
+# the prefix, if any prefix exists.
+
+COMMIT_MSG_FILE="$1"
+
+# First non-comment, non-empty line is the subject.
+SUBJECT=$(grep -v '^#' "$COMMIT_MSG_FILE" | grep -m1 '.')
+
+# Nothing to check (empty commit message, aborted elsewhere).
+[ -z "$SUBJECT" ] && exit 0
+
+# Strip a leading Conventional Commit prefix like "feat(scope)!: " if present.
+REST=$(echo "$SUBJECT" | sed -E 's/^[a-zA-Z]+(\([^)]*\))?!?:[[:space:]]*//')
+
+# First non-whitespace character of whatever remains.
+FIRST_CHAR=$(echo "$REST" | sed -E 's/^[[:space:]]+//' | cut -c1)
+
+if [ -n "$FIRST_CHAR" ] && ! [[ "$FIRST_CHAR" =~ [A-Z] ]]; then
+  echo "error: commit message must start with an Uppercase letter (after any 'type:' prefix)." >&2
+  echo "  got: \"$SUBJECT\"" >&2
+  exit 1
+fi
