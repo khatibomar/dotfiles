@@ -446,12 +446,16 @@ configure_ssh_service() {
 
 configure_dnf_automatic_service() {
 	print_info "Configuring dnf-automatic..."
-	if command -v dnf-automatic &>/dev/null || systemctl list-unit-files dnf5-automatic.timer &>/dev/null; then
+	if command -v dnf-automatic &>/dev/null || systemctl list-unit-files dnf5-automatic.timer &>/dev/null || systemctl list-unit-files dnf-automatic.timer &>/dev/null; then
 		# Check and update config files without breaking INI format
 		for conf_file in /etc/dnf/automatic.conf /etc/dnf/dnf5-plugins/automatic.conf; do
 			if [ -f "$conf_file" ]; then
-				if grep -q "apply_updates.*=.*no" "$conf_file" 2>/dev/null; then
+				if grep -q "^apply_updates" "$conf_file" 2>/dev/null; then
 					sudo sed -i 's/^apply_updates.*/apply_updates = yes/' "$conf_file"
+				elif grep -q "^\[commands\]" "$conf_file" 2>/dev/null; then
+					sudo sed -i '/^\[commands\]/a apply_updates = yes' "$conf_file"
+				else
+					echo -e "[commands]\napply_updates = yes" | sudo tee -a "$conf_file" >/dev/null
 				fi
 			fi
 		done
@@ -462,6 +466,9 @@ configure_dnf_automatic_service() {
 			print_success "dnf5-automatic enabled and started"
 		elif systemctl list-unit-files dnf-automatic-install.timer &>/dev/null; then
 			sudo systemctl enable --now dnf-automatic-install.timer &>/dev/null
+			print_success "dnf-automatic-install enabled and started"
+		elif systemctl list-unit-files dnf-automatic.timer &>/dev/null; then
+			sudo systemctl enable --now dnf-automatic.timer &>/dev/null
 			print_success "dnf-automatic enabled and started"
 		else
 			print_error "No dnf automatic timer found to enable."
