@@ -1,26 +1,43 @@
 #!/bin/bash
 
-# Reject commits whose subject line doesn't start with an uppercase letter.
-# Conventional Commit prefixes (e.g. "feat:", "fix(scope)!:") are stripped
-# first, so the check applies to the first non-whitespace character after
-# the prefix, if any prefix exists.
+# Auto-capitalize the subject line's first letter instead of rejecting the
+# commit. Conventional Commit prefixes (e.g. "feat:", "fix(scope)!:") are
+# stripped first, so the capitalization applies to the first non-whitespace
+# character after the prefix, if any prefix exists.
 
 COMMIT_MSG_FILE="$1"
 
-# First non-comment, non-empty line is the subject.
-SUBJECT=$(grep -v '^#' "$COMMIT_MSG_FILE" | grep -m1 '.')
+awk '
+  !skipped_prefix_search && !found && $0 !~ /^#/ && $0 ~ /[^[:space:]]/ {
+    found = 1
+    ln = NR
+  }
+  { lines[NR] = $0 }
+  END {
+    if (found) {
+      line = lines[ln]
 
-# Nothing to check (empty commit message, aborted elsewhere).
-[ -z "$SUBJECT" ] && exit 0
+      # Strip a leading Conventional Commit prefix like "feat(scope)!: ".
+      if (match(line, /^[a-zA-Z]+(\([^)]*\))?!?:[[:space:]]*/)) {
+        prefix = substr(line, RSTART, RLENGTH)
+        rest = substr(line, RSTART + RLENGTH)
+      } else {
+        prefix = ""
+        rest = line
+      }
 
-# Strip a leading Conventional Commit prefix like "feat(scope)!: " if present.
-REST=$(echo "$SUBJECT" | sed -E 's/^[a-zA-Z]+(\([^)]*\))?!?:[[:space:]]*//')
+      # Capitalize the first non-whitespace character of what remains.
+      if (match(rest, /[^[:space:]]/)) {
+        pos = RSTART
+        c = substr(rest, pos, 1)
+        if (c ~ /[a-z]/) {
+          rest = substr(rest, 1, pos - 1) toupper(c) substr(rest, pos + 1)
+        }
+      }
 
-# First non-whitespace character of whatever remains.
-FIRST_CHAR=$(echo "$REST" | sed -E 's/^[[:space:]]+//' | cut -c1)
+      lines[ln] = prefix rest
+    }
 
-if [ -n "$FIRST_CHAR" ] && ! [[ "$FIRST_CHAR" =~ [A-Z] ]]; then
-  echo "error: commit message must start with an Uppercase letter (after any 'type:' prefix)." >&2
-  echo "  got: \"$SUBJECT\"" >&2
-  exit 1
-fi
+    for (i = 1; i <= NR; i++) print lines[i]
+  }
+' "$COMMIT_MSG_FILE" > "$COMMIT_MSG_FILE.tmp" && mv "$COMMIT_MSG_FILE.tmp" "$COMMIT_MSG_FILE"
