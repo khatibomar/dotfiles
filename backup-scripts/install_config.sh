@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc")
+EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -92,6 +92,24 @@ if [ -f "$CONFIG_DIR/konsolerc" ]; then
 else
 	echo "Error: Config directory $CONFIG_DIR does not exist."
 	exit 1
+fi
+
+# Handle AI_RULES.md (global AI rules for Gemini and Claude)
+if [ -f "$CONFIG_DIR/AI_RULES.md" ]; then
+	echo "Setting up global AI rules..."
+	DOTFILES_DIR=$(pwd)
+	
+	# Gemini (Antigravity)
+	GEMINI_RULES_DIR="$HOME/.gemini/rules"
+	mkdir -p "$GEMINI_RULES_DIR"
+	ln -sf "$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" "$GEMINI_RULES_DIR/global.md"
+	
+	# Claude
+	CLAUDE_CONFIG_DIR="$HOME/.config/claude"
+	mkdir -p "$CLAUDE_CONFIG_DIR"
+	ln -sf "$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
+else
+	echo "No AI_RULES.md found. Skipping."
 fi
 
 echo "Backup and copy for general config completed successfully."
