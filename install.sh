@@ -13,8 +13,8 @@ main_menu() {
 		echo "5) Import GPG keys"
 		echo "6) Import SSH keys"
 		echo "7) Install wallpaper"
-		echo "8) Install OpenCode AI Assistant"
-		echo "9) Enable Bluetooth battery level display"
+		echo "8) Enable Bluetooth battery level display"
+		echo "9) Install AI Tools"
 		echo "10) Run ALL steps"
 		echo "0) Exit"
 		echo "======================"
@@ -36,8 +36,8 @@ main_menu() {
 		5) bash "$SCRIPT_DIR/import_gpg_keys.sh" ;;
 		6) bash "$SCRIPT_DIR/import_ssh_keys.sh" ;;
 		7) bash "$SCRIPT_DIR/install_wallpaper.sh" ;;
-		8) bash ./scripts/install_opencode.sh ;;
-		9) bash ./scripts/enable_bluetooth_battery.sh ;;
+		8) bash ./scripts/enable_bluetooth_battery.sh ;;
+		9) bash ./scripts/install_ai_tools.sh ;;
 		10)
 			echo "Running ALL steps..."
 			source ./scripts/install_apps.sh
@@ -48,8 +48,9 @@ main_menu() {
 			bash "$SCRIPT_DIR/import_gpg_keys.sh"
 			bash "$SCRIPT_DIR/import_ssh_keys.sh"
 			bash "$SCRIPT_DIR/install_wallpaper.sh"
-			bash ./scripts/install_opencode.sh
 			bash ./scripts/enable_bluetooth_battery.sh
+			echo ""
+			echo "Note: AI Tools (option 9) is skipped here since it's a per-machine, interactive choice."
 			;;
 		0)
 			echo "Exiting..."
