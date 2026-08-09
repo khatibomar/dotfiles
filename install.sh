@@ -15,7 +15,8 @@ main_menu() {
 		echo "7) Install wallpaper"
 		echo "8) Enable Bluetooth battery level display"
 		echo "9) Install AI Tools"
-		echo "10) Run ALL steps"
+		echo "10) Patch drag and drop Discord Flatpak"
+		echo "11) Run ALL steps"
 		echo "0) Exit"
 		echo "======================"
 		echo ""
@@ -38,7 +39,8 @@ main_menu() {
 		7) bash "$SCRIPT_DIR/install_wallpaper.sh" ;;
 		8) bash ./scripts/enable_bluetooth_battery.sh ;;
 		9) bash ./scripts/install_ai_tools.sh ;;
-		10)
+		10) bash ./scripts/patch_discord_flatpak.sh ;;
+		11)
 			echo "Running ALL steps..."
 			source ./scripts/install_apps.sh
 			main
@@ -49,6 +51,7 @@ main_menu() {
 			bash "$SCRIPT_DIR/import_ssh_keys.sh"
 			bash "$SCRIPT_DIR/install_wallpaper.sh"
 			bash ./scripts/enable_bluetooth_battery.sh
+			bash ./scripts/patch_discord_flatpak.sh
 			echo ""
 			echo "Note: AI Tools (option 9) is skipped here since it's a per-machine, interactive choice."
 			;;
