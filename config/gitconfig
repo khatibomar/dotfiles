@@ -64,9 +64,6 @@
   email = ayn.khatib@gmail.com
   name = ayn
   signingkey = 0D2909D6BB710138
-  # Use conditional includes for different projects
-  [includeIf "gitdir:~/work/"]
-    path = ~/work/.gitconfig
 
 [commit]
   gpgsign = true
@@ -208,3 +205,7 @@
 
 [url "ssh://git@github.com/"]
   insteadOf = https://github.com/
+
+# Conditional includes must stay last so their values override the settings above.
+[includeIf "gitdir:~/work/"]
+  path = ~/work/.gitconfig
