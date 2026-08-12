@@ -105,7 +105,7 @@ if [ -f "$CONFIG_DIR/AI_RULES.md" ]; then
 	ln -sf "$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" "$GEMINI_RULES_DIR/global.md"
 	
 	# Claude
-	CLAUDE_CONFIG_DIR="$HOME/.config/claude"
+	CLAUDE_CONFIG_DIR="$HOME/.claude"
 	mkdir -p "$CLAUDE_CONFIG_DIR"
 	ln -sf "$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
 else
