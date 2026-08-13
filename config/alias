@@ -20,3 +20,5 @@ alias stopwatch='start=$(date +%s%3N); while true; do now=$(date +%s%3N); elapse
 alias open=xdg-open
 alias o=xdg-open
 alias kwrite='setsid kwrite'
+alias psql='PGOPTIONS="-c default_transaction_read_only=on" psql'
+alias psql-admin='command psql'
