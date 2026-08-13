@@ -22,3 +22,4 @@ alias o=xdg-open
 alias kwrite='setsid kwrite'
 alias psql='PGOPTIONS="-c default_transaction_read_only=on" psql'
 alias psql-admin='command psql'
+alias codium='function _codium() { /usr/bin/flatpak run --branch=stable --arch=x86_64 --command=com.vscodium.codium --file-forwarding com.vscodium.codium @@ "$@" @@; }; _codium'
