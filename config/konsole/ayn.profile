@@ -1,6 +1,6 @@
 [Appearance]
 ColorScheme=Breeze
-Font=IosevkaTerm Nerd Font,24,-1,5,50,0,0,0,0,0
+Font=IosevkaTerm Nerd Font,12,-1,5,50,0,0,0,0,0
 Opacity=0.85
 
 [Cursor Options]
