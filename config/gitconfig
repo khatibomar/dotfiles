@@ -12,6 +12,7 @@
   cp = cherry-pick
   dc = diff --cached
   ds = diff --staged
+  dn = !git add -A -N >/dev/null && git diff
   ignore = update-index --skip-worktree
   unignore = update-index --no-skip-worktree
 
