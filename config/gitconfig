@@ -20,7 +20,7 @@
   # Quick navigation and info
   s = status --short --branch
   d = !git da
-  dt = difftool -d
+  dt = !git add -A -N >/dev/null && git difftool -d
   mt = mergetool
   sw = switch
   swc = switch -c
