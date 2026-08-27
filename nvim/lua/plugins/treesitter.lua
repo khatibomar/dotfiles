@@ -50,6 +50,7 @@ return {
 				"proto",
 				"diff",
 				"markdown",
+				"typespec",
 			})
 
 			-- Automatically enable highlighting and indentation for any

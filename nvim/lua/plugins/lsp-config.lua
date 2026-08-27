@@ -31,8 +31,9 @@ return {
 		lazy = false,
 		config = function()
 			require("mason-lspconfig").setup({
-				ensure_installed = vim.tbl_extend("force", common_lsps, {
+				ensure_installed = vim.list_extend(vim.deepcopy(common_lsps), {
 					-- NOTE: gopls excluded - using system installation
+					"tsp_server",
 				}),
 				automatic_enable = {
 					exclude = vim.list_extend(vim.deepcopy(common_lsps), { "gopls" }),
@@ -46,6 +47,11 @@ return {
 		dependencies = { "saghen/blink.cmp" },
 		config = function()
 			local capabilities = require("blink.cmp").get_lsp_capabilities()
+
+			-- TypeSpec language server (installed and enabled via Mason)
+			vim.lsp.config("tsp_server", {
+				capabilities = capabilities,
+			})
 
 			-- Setup for Go language server (using system gopls, not Mason)
 			vim.lsp.config("gopls", {
