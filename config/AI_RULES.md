@@ -1,7 +1,7 @@
 # Global AI Rules
 
 - When writing plans or documentation use: ASD-STE100 Simplified Technical
-  English (STE for short)
+  English (STE for short). Documentation includes code comments.
 - When committing don't put your watermark
 - Comments must describe the current code only, not change history or prior context
 - Do not add trivial comments, even if surrounding code already has them
