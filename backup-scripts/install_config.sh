@@ -26,7 +26,14 @@ if [ -d "$CONFIG_DIR" ]; then
 		base_name=$(basename "$item")
 
 		# Check if the item is in the exclusion list
-		if [[ " ${EXCLUDED_FILES[@]} " =~ " $base_name " ]]; then
+		is_excluded=false
+		for excluded in "${EXCLUDED_FILES[@]}"; do
+			if [ "$base_name" = "$excluded" ]; then
+				is_excluded=true
+				break
+			fi
+		done
+		if $is_excluded; then
 			echo "Skipping excluded item: $base_name"
 			continue
 		fi
@@ -58,7 +65,7 @@ if [ -f "$CONFIG_DIR/htoprc" ]; then
 	echo "Copying htoprc to $HTOP_DIR/htoprc"
 	cp "$CONFIG_DIR/htoprc" "$HTOP_DIR/htoprc"
 else
-	echo "Error: Config directory $CONFIG_DIR does not exist."
+	echo "Error: $CONFIG_DIR/htoprc does not exist."
 	exit 1
 fi
 
@@ -69,7 +76,7 @@ if [ -f "$CONFIG_DIR/mpv.conf" ]; then
 	echo "Copying mpv to $MPV_DIR/mpv.conf"
 	cp "$CONFIG_DIR/mpv.conf" "$MPV_DIR/mpv.conf"
 else
-	echo "Error: Config directory $CONFIG_DIR does not exist."
+	echo "Error: $CONFIG_DIR/mpv.conf does not exist."
 	exit 1
 fi
 
@@ -80,7 +87,7 @@ if [ -f "$CONFIG_DIR/kdiff3rc" ]; then
 	echo "Copying kdiff3rc to $KDIFF3_DIR/kdiff3rc"
 	cp "$CONFIG_DIR/kdiff3rc" "$KDIFF3_DIR/kdiff3rc"
 else
-	echo "Error: Config directory $CONFIG_DIR does not exist."
+	echo "Error: $CONFIG_DIR/kdiff3rc does not exist."
 	exit 1
 fi
 
@@ -101,7 +108,7 @@ if [ -f "$CONFIG_DIR/konsolerc" ]; then
 	echo "Copying konsolerc to $KONSOLERC_DIR/konsolerc"
 	cp "$CONFIG_DIR/konsolerc" "$KONSOLERC_DIR/konsolerc"
 else
-	echo "Error: Config directory $CONFIG_DIR does not exist."
+	echo "Error: $CONFIG_DIR/konsolerc does not exist."
 	exit 1
 fi
 

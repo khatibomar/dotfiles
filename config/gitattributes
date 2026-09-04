@@ -5,7 +5,8 @@
 go.mod merge=ours
 go.sum merge=ours
 **/vendor/** linguist-vendored
-*.test binary  # Compiled test binaries
+# Compiled test binaries
+*.test binary
 testdata/** linguist-generated
 
 # ======================
@@ -59,13 +60,10 @@ CHANGELOG merge=union
 *.proto diff=proto
 *.sql diff=sql
 *.log diff=none
-*.pb.go diff=off  # Generated protobuf files
+# Generated protobuf files
+*.pb.go diff=off
 
-# Custom diff drivers (add to git config)
-[diff "go"]
-  xfuncname = "^func ([A-Za-z_][A-Za-z0-9_]*)\\("
-[diff "proto"]
-  xfuncname = "^message ([A-Za-z_][A-Za-z0-9_]*)\\s*{"
+# Custom diff drivers (xfuncname regexes live in config/gitconfig)
 
 # ======================
 # GitHub Linguist Overrides
@@ -74,8 +72,10 @@ assets/** linguist-vendored
 third_party/** linguist-vendored
 **/mocks/** linguist-generated
 **/testdata/** linguist-generated
-**/*_string.go linguist-generated  # Generated string methods
-**/zz_generated*.go linguist-generated  # Kubernetes-style generated code
+# Generated string methods
+**/*_string.go linguist-generated
+# Kubernetes-style generated code
+**/zz_generated*.go linguist-generated
 
 # ======================
 # Git LFS Configuration

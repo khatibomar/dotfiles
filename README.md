@@ -35,7 +35,7 @@ https://opencode.ai <br />
 
 # Install
 
-if you don't already have the GPG configured locally, you need to modify `keys/github_gpg_private_key.asc` <br/>
+if you don't already have the GPG configured locally, you need to modify `keys/gpg_private_key.asc` <br/>
 and place the real private key inside then run the script<br/>
 
 ```sh
