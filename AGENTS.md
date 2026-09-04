@@ -17,6 +17,7 @@ Personal dotfiles for Linux/macOS. This is not a buildable project — configs a
 | `config/*` (most) | `~/.$name` | Exceptions below |
 | `config/htoprc` | `~/.config/htop/htoprc` | |
 | `config/mpv.conf` | `~/.config/mpv/mpv.conf` | |
+| `config/kdiff3rc` | `~/.config/kdiff3rc` | KDE reads it from XDG config, not `~/.kdiff3rc` |
 | `config/konsole/*` | `~/.konsole/` | Konsole terminal profiles |
 | `config/konsolerc` | `~/.config/konsolerc` | Sets default Konsole profile to `ayn.profile` |
 | `nvim/` | `~/.config/nvim/` | |

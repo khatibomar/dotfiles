@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md")
+EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md" "kdiff3rc")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -68,6 +68,17 @@ if [ -f "$CONFIG_DIR/mpv.conf" ]; then
 	mkdir -p "$MPV_DIR" # Create the alacritty directory if it doesn't exist
 	echo "Copying mpv to $MPV_DIR/mpv.conf"
 	cp "$CONFIG_DIR/mpv.conf" "$MPV_DIR/mpv.conf"
+else
+	echo "Error: Config directory $CONFIG_DIR does not exist."
+	exit 1
+fi
+
+# Handle kdiff3rc separately (KDE reads it from ~/.config, not ~/.kdiff3rc)
+if [ -f "$CONFIG_DIR/kdiff3rc" ]; then
+	KDIFF3_DIR="$HOME/.config"
+	mkdir -p "$KDIFF3_DIR"
+	echo "Copying kdiff3rc to $KDIFF3_DIR/kdiff3rc"
+	cp "$CONFIG_DIR/kdiff3rc" "$KDIFF3_DIR/kdiff3rc"
 else
 	echo "Error: Config directory $CONFIG_DIR does not exist."
 	exit 1
