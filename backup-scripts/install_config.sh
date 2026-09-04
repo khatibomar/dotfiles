@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md" "kdiff3rc")
+EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md" "kdiff3rc" "plasma")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -128,6 +128,22 @@ if [ -f "$CONFIG_DIR/AI_RULES.md" ]; then
 	ln -sf "$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
 else
 	echo "No AI_RULES.md found. Skipping."
+fi
+
+# Handle plasma configs (kwinrc, kdeglobals, plasmarc, etc. live flat under ~/.config)
+if [ -d "$CONFIG_DIR/plasma" ]; then
+	echo "Copying plasma configs to $HOME/.config"
+	for plasma_file in "$CONFIG_DIR/plasma"/*; do
+		base_name=$(basename "$plasma_file")
+		OLD_FILE="$HOME/.config/$base_name"
+		if [ -e "$OLD_FILE" ]; then
+			echo "Backing up the old .config/$base_name to $BACKUP_DIR/$base_name"
+			mv "$OLD_FILE" "$BACKUP_DIR/$base_name"
+		fi
+		cp "$plasma_file" "$OLD_FILE"
+	done
+else
+	echo "No plasma config directory found. Skipping."
 fi
 
 echo "Backup and copy for general config completed successfully."

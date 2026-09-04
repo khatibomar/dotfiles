@@ -3,6 +3,9 @@ Id_1=5afad1db-ae07-48e2-9d4d-c415ee11cc6b
 Number=1
 Rows=1
 
+[ElectricBorders]
+TopLeft=Overview
+
 [NightColor]
 Active=true
 Mode=Constant
