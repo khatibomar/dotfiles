@@ -91,6 +91,14 @@ local actions = {
     end,
   },
   {
+    text = "Rename Symbol",
+    cmd = "Rename Symbol",
+    desc = "Rename the symbol under the cursor, with live preview",
+    action = function()
+      vim.fn.feedkeys(":IncRename " .. vim.fn.expand("<cword>"), "n")
+    end,
+  },
+  {
     text = "Diagnostics",
     cmd = "Diagnostics",
     desc = "List all diagnostics in the project",
@@ -180,10 +188,163 @@ local actions = {
   },
 }
 
+-- Only relevant with a Go buffer focused; appended on top of `actions` in that case.
+local go_actions = {
+  {
+    text = "Go: Test Nearest Function",
+    cmd = "Go: Test Nearest Function",
+    desc = "Run the test function under the cursor",
+    action = function()
+      vim.cmd("GoTestFunc")
+    end,
+  },
+  {
+    text = "Go: Test File",
+    cmd = "Go: Test File",
+    desc = "Run all tests in the current file",
+    action = function()
+      vim.cmd("GoTestFile")
+    end,
+  },
+  {
+    text = "Go: Test Package",
+    cmd = "Go: Test Package",
+    desc = "Run all tests in the current package",
+    action = function()
+      vim.cmd("GoTestPkg")
+    end,
+  },
+  {
+    text = "Go: Toggle Coverage",
+    cmd = "Go: Toggle Coverage",
+    desc = "Overlay test coverage on the current file",
+    action = function()
+      vim.cmd("GoCoverage")
+    end,
+  },
+  {
+    text = "Go: Switch Test <-> Impl",
+    cmd = "Go: Switch Test <-> Impl",
+    desc = "Jump between a file and its _test.go counterpart",
+    action = function()
+      vim.cmd("GoAlt")
+    end,
+  },
+  {
+    text = "Go: Generate Interface Stub",
+    cmd = "Go: Generate Interface Stub",
+    desc = "Generate method stubs for an interface (GoImpl)",
+    action = function()
+      vim.cmd("GoImpl")
+    end,
+  },
+  {
+    text = "Go: Fill Struct",
+    cmd = "Go: Fill Struct",
+    desc = "Fill the struct literal under the cursor with its fields",
+    action = function()
+      vim.cmd("GoFillStruct")
+    end,
+  },
+  {
+    text = "Go: Add If Err",
+    cmd = "Go: Add If Err",
+    desc = "Insert an if err != nil block for the call under the cursor",
+    action = function()
+      vim.cmd("GoIfErr")
+    end,
+  },
+  {
+    text = "Go: Add Struct Tags",
+    cmd = "Go: Add Struct Tags",
+    desc = "Add struct tags (e.g. json) to the struct under the cursor",
+    action = function()
+      vim.cmd("GoAddTag")
+    end,
+  },
+  {
+    text = "Go: Remove Struct Tags",
+    cmd = "Go: Remove Struct Tags",
+    desc = "Remove struct tags from the struct under the cursor",
+    action = function()
+      vim.cmd("GoRmTag")
+    end,
+  },
+  {
+    text = "Go: Mod Tidy",
+    cmd = "Go: Mod Tidy",
+    desc = "Run go mod tidy for the current module",
+    action = function()
+      vim.cmd("GoModTidy")
+    end,
+  },
+  {
+    text = "Go: Vet",
+    cmd = "Go: Vet",
+    desc = "Run go vet on the current package",
+    action = function()
+      vim.cmd("GoVet")
+    end,
+  },
+  {
+    text = "Go: Build",
+    cmd = "Go: Build",
+    desc = "Build the current package",
+    action = function()
+      vim.cmd("GoBuild")
+    end,
+  },
+  {
+    text = "Go: Run",
+    cmd = "Go: Run",
+    desc = "Run the current package",
+    action = function()
+      vim.cmd("GoRun")
+    end,
+  },
+  {
+    text = "Go: Doc",
+    cmd = "Go: Doc",
+    desc = "Show documentation for the symbol under the cursor",
+    action = function()
+      vim.cmd("GoDoc")
+    end,
+  },
+  {
+    text = "Go: Vulncheck",
+    cmd = "Go: Vulncheck",
+    desc = "Scan the current module for known vulnerabilities",
+    action = function()
+      vim.cmd("GoVulnCheck")
+    end,
+  },
+  {
+    text = "Go: Symbol Outline",
+    cmd = "Go: Symbol Outline",
+    desc = "Toggle the struct/function outline for the current file",
+    action = function()
+      require("structrue-go").toggle()
+    end,
+  },
+  {
+    text = "Go: Restart gopls",
+    cmd = "Go: Restart gopls",
+    desc = "Restart gopls (useful after go.mod or build tag changes)",
+    action = function()
+      vim.cmd("LspRestart gopls")
+    end,
+  },
+}
+
 function M.open()
+  local items = actions
+  if vim.tbl_contains({ "go", "gomod", "gowork" }, vim.bo.filetype) then
+    items = vim.list_extend(vim.deepcopy(actions), go_actions)
+  end
+
   Snacks.picker.pick({
     title = "Command Palette",
-    items = actions,
+    items = items,
     format = "command",
     layout = { hidden = { "preview" } },
     confirm = function(picker, item)
