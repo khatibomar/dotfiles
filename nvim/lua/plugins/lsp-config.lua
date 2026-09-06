@@ -140,7 +140,7 @@ return {
 
 			-- Keymaps for LSP functionality
 			vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
-			vim.keymap.set("n", "<leader>gd", vim.lsp.buf.definition, { desc = "Go to Definition" })
+			vim.keymap.set("n", "gd", vim.lsp.buf.definition, { desc = "Go to Definition" })
 			vim.keymap.set("n", "<leader>gr", vim.lsp.buf.references, { desc = "Go to References" })
 			vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code Action" })
 		end,
