@@ -29,6 +29,7 @@ k.set("n", "<leader>dl", diagnostics_to_qf, vim.tbl_extend("force", opts, { desc
 k.set("n", "<leader>gd", vim.lsp.buf.definition, opts)
 k.set("n", "<leader>gr", vim.lsp.buf.references, opts)
 k.set("n", "<leader>gi", vim.lsp.buf.implementation, opts)
+k.set("n", "<leader>gb", "<C-o>", vim.tbl_extend("force", opts, { desc = "Go Back" }))
 
 k.set({ "n", "i" }, "<C-p>", function()
   require("config.command-palette").open()
