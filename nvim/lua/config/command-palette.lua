@@ -85,9 +85,41 @@ local actions = {
   {
     text = "LSP Symbols",
     cmd = "LSP Symbols",
-    desc = "Browse document/workspace symbols",
+    desc = "Browse symbols in the current document",
     action = function()
       Snacks.picker.lsp_symbols()
+    end,
+  },
+  {
+    text = "Workspace Symbols",
+    cmd = "Workspace Symbols",
+    desc = "Fuzzy-find any function/type/const across the whole project",
+    action = function()
+      Snacks.picker.lsp_workspace_symbols()
+    end,
+  },
+  {
+    text = "Incoming Calls",
+    cmd = "Incoming Calls",
+    desc = "Who calls the function under the cursor",
+    action = function()
+      Snacks.picker.lsp_incoming_calls()
+    end,
+  },
+  {
+    text = "Outgoing Calls",
+    cmd = "Outgoing Calls",
+    desc = "What the function under the cursor calls",
+    action = function()
+      Snacks.picker.lsp_outgoing_calls()
+    end,
+  },
+  {
+    text = "Type Definition",
+    cmd = "Type Definition",
+    desc = "Jump to where the type of the value under the cursor is declared",
+    action = function()
+      Snacks.picker.lsp_type_definitions()
     end,
   },
   {
