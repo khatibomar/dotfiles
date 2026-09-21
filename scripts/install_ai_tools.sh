@@ -47,15 +47,36 @@ command_exists() {
 install_claude_code() {
 	if command_exists claude; then
 		print_success "Claude Code already installed ($(claude --version 2>/dev/null))"
-		return 0
+	else
+		print_info "Installing Claude Code..."
+		if curl -fsSL https://claude.ai/install.sh | bash; then
+			print_success "Claude Code installed"
+		else
+			print_error "Failed to install Claude Code"
+			return 1
+		fi
 	fi
 
-	print_info "Installing Claude Code..."
-	if curl -fsSL https://claude.ai/install.sh | bash; then
-		print_success "Claude Code installed"
+	deploy_claude_config
+}
+
+# Copies base settings.json and the statusline script into ~/.claude.
+# Machine- or job-specific settings (e.g. autoMode context) stay local and
+# out of this repo -- merge them by hand after this runs.
+deploy_claude_config() {
+	local script_dir="$(dirname "$0")"
+	local repo_dir="$(cd "$script_dir/.." && pwd)"
+	local src_dir="$repo_dir/config/claude"
+
+	mkdir -p "$HOME/.claude"
+	cp "$src_dir/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
+	print_success "Deployed statusline-command.sh to ~/.claude/"
+
+	if [ -f "$HOME/.claude/settings.json" ]; then
+		print_warning "~/.claude/settings.json already exists, not overwriting (see $src_dir/settings.json to merge manually)"
 	else
-		print_error "Failed to install Claude Code"
-		return 1
+		cp "$src_dir/settings.json" "$HOME/.claude/settings.json"
+		print_success "Deployed settings.json to ~/.claude/"
 	fi
 }
 

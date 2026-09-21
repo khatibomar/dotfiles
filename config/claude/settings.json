@@ -1,0 +1,56 @@
+{
+  "env": {
+    "CLAUDE_CODE_DISABLE_MOUSE_CLICKS": "1"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "sh /home/omar/.claude/statusline-command.sh",
+    "refreshInterval": 2
+  },
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true,
+    "gograph@gograph": true,
+    "modern-go-guidelines@goland-claude-marketplace": true,
+    "postgres-best-practices@postgres-skills": true,
+    "caveman@caveman": true
+  },
+  "extraKnownMarketplaces": {
+    "gograph": {
+      "source": {
+        "source": "github",
+        "repo": "ozgurcd/gograph"
+      }
+    },
+    "goland-claude-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "JetBrains/go-modern-guidelines"
+      }
+    },
+    "postgres-skills": {
+      "source": {
+        "source": "github",
+        "repo": "neondatabase/postgres-skills"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "modelSettings": {
+    "claude-sonnet-5": {
+      "effortLevel": "low"
+    },
+    "claude-opus-5": {
+      "effortLevel": "medium"
+    }
+  },
+  "tui": "default",
+  "skipWorkflowUsageWarning": true,
+  "theme": "auto",
+  "defaultMode": "manual"
+}
