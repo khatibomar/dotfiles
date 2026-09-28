@@ -40,5 +40,22 @@ obsidian() {
     fi
   fi
 
-  flatpak run md.obsidian.Obsidian "obsidian://open?path=$target_path"
+  # Obsidian opens only vaults that are in its registry, so add the vault there first.
+  local registry="$HOME/.var/app/md.obsidian.Obsidian/config/obsidian/obsidian.json"
+  [[ -s "$registry" ]] || { mkdir -p "${registry:h}" && echo '{"vaults":{}}' >"$registry"; }
+  if ! jq -e --arg p "$target_path" '.vaults // {} | any(.path == $p)' "$registry" >/dev/null; then
+    if pgrep -x obsidian >/dev/null; then
+      echo "Close Obsidian first, so the new vault can be registered."
+      return 1
+    fi
+    local id tmp
+    id="$(openssl rand -hex 8)"
+    tmp="$(mktemp)"
+    jq --arg id "$id" --arg p "$target_path" --argjson ts "$(date +%s%3N)" \
+      '.vaults[$id] = {path: $p, ts: $ts}' "$registry" >"$tmp" && mv "$tmp" "$registry"
+  fi
+
+  local uri_path
+  uri_path="$(jq -rn --arg p "$target_path" '$p | @uri')"
+  setsid flatpak run md.obsidian.Obsidian "obsidian://open?path=$uri_path" >/dev/null 2>&1 &!
 }
