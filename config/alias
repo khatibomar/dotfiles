@@ -24,3 +24,21 @@ alias kwrite='setsid kwrite'
 alias psql='PGOPTIONS="-c default_transaction_read_only=on" psql'
 alias psql-admin='command psql'
 alias codium='function _codium() { /usr/bin/flatpak run --branch=stable --arch=x86_64 --command=com.vscodium.codium --file-forwarding com.vscodium.codium @@ "$@" @@; }; _codium'
+obsidian() {
+  local target_path="${1:-$PWD}"
+  target_path="$(realpath -m "$target_path")"
+
+  if [[ ! -d "$target_path/.obsidian" ]]; then
+    printf "Directory '%s' is not an Obsidian vault (missing .obsidian).\n" "$target_path"
+    printf "Initialize Obsidian vault here? [y/N] "
+    read -r confirm </dev/tty
+    if [[ "$confirm" == [Yy]* ]]; then
+      mkdir -p "$target_path/.obsidian"
+    else
+      echo "Aborted."
+      return 1
+    fi
+  fi
+
+  flatpak run md.obsidian.Obsidian "obsidian://open?path=$target_path"
+}
