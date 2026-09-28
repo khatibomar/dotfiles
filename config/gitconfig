@@ -20,7 +20,8 @@
   # Quick navigation and info
   s = status --short --branch
   d = !git dt
-  dt = !git add -A -N >/dev/null && git difftool -d
+  # Fully stage intent-to-add symlinks: difftool -d cannot read them
+  dt = "!f() { git add -A -N >/dev/null && git ls-files -s -z | awk -v RS='\\0' -v ORS='\\0' '$1 == 120000 && $2 == \"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391\" { sub(/^[^\\t]*\\t/, \"\"); print }' | xargs -0 -r git add -- && git difftool -d \"$@\"; }; f"
   mt = mergetool
   sw = switch
   swc = switch -c
