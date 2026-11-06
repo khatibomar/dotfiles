@@ -1,5 +1,9 @@
 # Global AI Rules
 
+- Use at max 1 agent, with no background agents.
+- If ultracode is on, use highest model as orchestrator and cheap ones for sub agents.
+- Sub-agents should not write code, but build a report so orchestrator can
+validate.
 - When writing plans or documentation use: ASD-STE100 Simplified Technical
   English (STE for short). Documentation includes code comments.
 - When committing don't put your watermark

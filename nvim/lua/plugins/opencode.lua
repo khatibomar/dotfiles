@@ -46,9 +46,8 @@ return {
 				require("opencode").toggle()
 			end, { desc = "Toggle opencode" })
 
-			-- Override default increment/decrement if using the above mappings
+			-- Restore default increment, since opencode uses <C-a>
 			vim.keymap.set("n", "+", "<C-a>", { desc = "Increment under cursor", noremap = true })
-			vim.keymap.set("n", "-", "<C-x>", { desc = "Decrement under cursor", noremap = true })
 		end,
 	},
 }
