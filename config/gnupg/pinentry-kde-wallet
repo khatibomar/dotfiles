@@ -1,0 +1,5 @@
+#!/bin/sh
+# Opt in to Pinentry's Secret Service integration on KDE.
+# KWallet supplies org.freedesktop.secrets; no secret passes through this wrapper.
+export PINENTRY_KDE_USE_WALLET=1
+exec /usr/bin/pinentry-qt "$@"

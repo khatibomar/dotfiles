@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md" "kdiff3rc" "plasma")
+EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md" "kdiff3rc" "plasma" "fcitx5" "plasma-workspace" "gnupg")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -145,5 +145,8 @@ if [ -d "$CONFIG_DIR/plasma" ]; then
 else
 	echo "No plasma config directory found. Skipping."
 fi
+
+# Deploy only agent settings; never move or replace the keyring directory.
+bash "$(dirname -- "${BASH_SOURCE[0]}")/install_gpg_agent.sh"
 
 echo "Backup and copy for general config completed successfully."

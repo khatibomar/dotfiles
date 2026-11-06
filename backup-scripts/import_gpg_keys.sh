@@ -30,3 +30,6 @@ else
 
   echo "Done importing GPG key."
 fi
+
+# Apply signing cache settings even when keys already exist.
+bash "$(dirname -- "${BASH_SOURCE[0]}")/install_gpg_agent.sh"

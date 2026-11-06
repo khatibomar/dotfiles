@@ -45,3 +45,33 @@ and place the real private key inside then run the script<br/>
 # Sources
 
 https://github.com/cpow/neovim-for-newbs <br/>
+
+## GPG signing with KDE Wallet
+
+The agent uses `config/gnupg/pinentry-kde-wallet` to run `pinentry-qt` with
+`PINENTRY_KDE_USE_WALLET=1`. This enables its Secret Service integration on KDE.
+KWallet's Secret Service must be running, and `pinentry-qt` must include libsecret
+support (Fedora's package does). Use a password-based wallet, not a wallet encrypted
+with the same GPG key, to avoid a circular unlock dependency.
+
+Both the general config and GPG import menu steps install these settings without
+replacing `~/.gnupg` or its keyring. To apply only the agent settings:
+
+```sh
+bash backup-scripts/install_gpg_agent.sh
+```
+
+An existing differing agent config is backed up beside it before replacement.
+On the next signing prompt, enter the GPG passphrase and select **Save passphrase
+in password manager**. Approve wallet access if KDE asks. Once saved, Pinentry
+retrieves the passphrase from the wallet after agent restarts and reboots. A wallet
+unlocked automatically by your login avoids a separate wallet password prompt;
+a locked wallet still requires unlocking. The agent also keeps a 24-hour memory
+cache between wallet lookups.
+
+Only configuration belongs in dotfiles: never commit passwords, private keys,
+or wallet files. To forget the saved passphrase, remove its **GnuPG:** entry in
+KDE Wallet Manager, then run `gpgconf --reload gpg-agent` to clear the memory cache.
+
+References: [Pinentry KDE opt-in](https://github.com/gpg/pinentry/blob/pinentry-1.3.2/pinentry/pinentry.c)
+and [KWallet Secret Service](https://github.com/KDE/kwallet).
