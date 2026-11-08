@@ -171,6 +171,16 @@ merge_json_config() {
 	return 0
 }
 
+# Prints the OpenCode config file to edit: the existing .jsonc, else .json.
+opencode_config_file() {
+	local dir="$HOME/.config/opencode"
+	if [ -f "$dir/opencode.jsonc" ]; then
+		echo "$dir/opencode.jsonc"
+	else
+		echo "$dir/opencode.json"
+	fi
+}
+
 wire_gograph_agy() {
 	if ! command_exists agy; then
 		return 0
@@ -205,7 +215,7 @@ wire_gograph_opencode() {
 
 	print_info "Wiring gograph into OpenCode..."
 	if merge_json_config \
-		"$HOME/.config/opencode/opencode.json" \
+		"$(opencode_config_file)" \
 		'{"$schema": "https://opencode.ai/config.json", "mcp": {}}' \
 		'.mcp.gograph' \
 		'.mcp.gograph = {"type": "local", "command": ["gograph", "mcp", "."], "enabled": true}'; then
@@ -307,7 +317,7 @@ wire_gopls_opencode() {
 
 	print_info "Wiring gopls MCP into OpenCode..."
 	if merge_json_config \
-		"$HOME/.config/opencode/opencode.json" \
+		"$(opencode_config_file)" \
 		'{"$schema": "https://opencode.ai/config.json", "mcp": {}}' \
 		'.mcp.gopls' \
 		'.mcp.gopls = {"type": "local", "command": ["gopls", "mcp"], "enabled": true}'; then
@@ -376,6 +386,26 @@ install_go_ai_tools() {
 install_opencode() {
 	local script_dir="$(dirname "$0")"
 	bash "$script_dir/install_opencode.sh"
+	deploy_oc_bridge
+}
+
+# Links scripts/oc into ~/.local/bin. Claude uses oc to send executor tasks to OpenCode.
+deploy_oc_bridge() {
+	local repo_dir
+	repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+	local target="$HOME/.local/bin/oc"
+
+	for dep in jq git; do
+		command_exists "$dep" || print_warning "$dep not found; oc needs it"
+	done
+
+	mkdir -p "$HOME/.local/bin"
+	if [ -e "$target" ] && [ ! -L "$target" ]; then
+		print_warning "$target exists and is not a link, not overwriting"
+		return 0
+	fi
+	ln -sfn "$repo_dir/scripts/oc" "$target"
+	print_success "Linked $target to $repo_dir/scripts/oc"
 }
 
 main() {

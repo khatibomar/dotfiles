@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+# oc: run one OpenCode executor task, watch it for hangs, print a short report.
+#
+#   oc [options] "prompt"          start a task (prompt can also come from stdin)
+#   oc -s ses_xxx "feedback"       send a task back for revision in the same session
+#   oc ps                          list runs that are still active
+#   oc kill <run-name>             stop a run
+#   oc log <run-name>              print the full report of a run
+#
+# Options:
+#   -m model     model (default $OC_MODEL or opencode-go/deepseek-v4.1-flash)
+#   -s session   continue this OpenCode session
+#   -n name      short run name (default: task)
+#   -f file      attach a file (repeatable)
+#   -w [name]    run in a new git worktree
+#   -i seconds   idle limit before the run counts as hung (default 300)
+#   -t seconds   hard time limit (default 2400)
+#   -r           read-only task: add "Do not edit any files" to the prompt
+#
+# Exit codes: 0 done, 1 failed, 2 blocked, 3 hung, 4 timeout, 5 usage limit.
+set -uo pipefail
+
+OC_MODEL="${OC_MODEL:-opencode-go/deepseek-v4.1-flash}"
+OC_FALLBACK="${OC_FALLBACK:-opencode-go/crouton-alpha-free}"
+OC_RUNS="${OC_RUNS:-$HOME/.local/state/oc}"
+OC_SVC_LOG="${OC_SVC_LOG:-$HOME/.local/share/opencode/log/opencode.log}"
+REPORT_LINES="${OC_REPORT_LINES:-80}"
+
+mkdir -p "$OC_RUNS"
+
+cmd_ps() {
+  local d any=0
+  for d in "$OC_RUNS"/*/; do
+    [[ -f "$d/pid" ]] || continue
+    local pid; pid=$(<"$d/pid")
+    kill -0 "$pid" 2>/dev/null || continue
+    any=1
+    local idle=$(( $(date +%s) - $(stat -c %Y "$d/events.jsonl" 2>/dev/null || date +%s) ))
+    local last; last=$(jq -r 'select(.type=="tool_use") | .part.tool' "$d/events.jsonl" 2>/dev/null | tail -1)
+    printf '%s  pid=%s  idle=%ss  last_tool=%s\n' "$(basename "$d")" "$pid" "$idle" "${last:--}"
+  done
+  (( any )) || echo "no active runs"
+}
+
+cmd_kill() {
+  local d="$OC_RUNS/$1"
+  [[ -f "$d/pid" ]] || { echo "no run $1" >&2; exit 1; }
+  kill "$(<"$d/pid")" 2>/dev/null && echo "killed $1"
+}
+
+case "${1:-}" in
+  ps) cmd_ps; exit 0 ;;
+  kill) cmd_kill "${2:?run name}"; exit 0 ;;
+  log) cat "$OC_RUNS/${2:?run name}/report.md"; exit 0 ;;
+esac
+
+model="$OC_MODEL" session="" name="task" idle_limit=300 hard_limit=2400 readonly=0
+files=() worktree=()
+while getopts ":m:s:n:f:w:i:t:r" opt; do
+  case $opt in
+    m) model=$OPTARG ;;
+    s) session=$OPTARG ;;
+    n) name=$OPTARG ;;
+    f) files+=(-f "$OPTARG") ;;
+    w) worktree=(--worktree="$OPTARG") ;;
+    i) idle_limit=$OPTARG ;;
+    t) hard_limit=$OPTARG ;;
+    r) readonly=1 ;;
+    :) [[ $OPTARG == w ]] && worktree=(--worktree) || { echo "-$OPTARG needs a value" >&2; exit 64; } ;;
+    *) echo "unknown option -$OPTARG" >&2; exit 64 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+task="$*"
+[[ -z "$task" && ! -t 0 ]] && task=$(cat)
+[[ -z "$task" ]] && { echo "no prompt" >&2; exit 64; }
+
+run="$name-$(date +%Y%m%d-%H%M%S)-$$"
+dir="$OC_RUNS/$run"
+mkdir -p "$dir"
+
+ro_line=""
+(( readonly )) && ro_line="- Do not edit any files. This is a read-only task."
+
+if [[ -z "$session" ]]; then
+  prompt="You are the executor. A reviewer plans the work and checks your result.
+Rules:
+- Do the task exactly as written. Do not expand scope.
+- Do not commit, push, or open PRs unless the task says so.
+- If the task is unclear or blocked, stop and say why. Do not guess.
+- Run the checks that the task names, or the nearest relevant tests.
+$ro_line
+
+TASK:
+$task
+
+End with this report and nothing after it. Keep it short:
+STATUS: done | blocked | failed
+CHANGED: <files changed, or none>
+CHECKS: <command -> pass/fail, one per line>
+RESULT: <the answer or a summary, at most 15 lines>
+QUESTIONS: <open points for the reviewer, or none>"
+else
+  prompt="REVIEW FEEDBACK. Fix these points, then send the same report format again:
+$task"
+fi
+printf '%s\n' "$prompt" > "$dir/prompt.txt"
+
+tree_sig() { git status --porcelain 2>/dev/null | md5sum | cut -c1-12; }
+
+run_once() {
+  local m=$1
+  : > "$dir/events.jsonl"
+  local args=(run -m "$m" --format json "${files[@]}" "${worktree[@]}")
+  if [[ -n "$session" ]]; then args+=(-s "$session"); else args+=(--archived --title "oc:$name"); fi
+  opencode "${args[@]}" "$prompt" >> "$dir/events.jsonl" 2> "$dir/stderr.log" &
+  local pid=$!
+  echo "$pid" > "$dir/pid"
+
+  local start now last_act sig new_sig svc_m new_svc_m size new_size
+  start=$(date +%s); last_act=$start
+  sig=$(tree_sig); svc_m=$(stat -c %Y "$OC_SVC_LOG" 2>/dev/null || echo 0); size=0
+  status_hint=""
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 10
+    now=$(date +%s)
+    new_size=$(stat -c %s "$dir/events.jsonl")
+    new_sig=$(tree_sig)
+    new_svc_m=$(stat -c %Y "$OC_SVC_LOG" 2>/dev/null || echo 0)
+    if [[ $new_size != "$size" || $new_sig != "$sig" || $new_svc_m != "$svc_m" ]]; then
+      last_act=$now; size=$new_size; sig=$new_sig; svc_m=$new_svc_m
+    fi
+    if (( now - last_act >= idle_limit )); then status_hint=hung; break; fi
+    if (( now - start >= hard_limit )); then status_hint=timeout; break; fi
+  done
+  if [[ -n $status_hint ]]; then
+    kill "$pid" 2>/dev/null; sleep 2; kill -9 "$pid" 2>/dev/null
+  fi
+  wait "$pid" 2>/dev/null
+  rm -f "$dir/pid"
+}
+
+t0=$(date +%s)
+used_model=$model
+run_once "$model"
+if [[ -z $status_hint ]] && grep -q '"provider.go-limit"\|GoUsageLimitError' "$dir/events.jsonl" \
+   && [[ $model != "$OC_FALLBACK" && -n $OC_FALLBACK ]]; then
+  limit_note="$model hit the OpenCode Go usage limit; this run used $OC_FALLBACK."
+  used_model=$OC_FALLBACK
+  run_once "$OC_FALLBACK"
+fi
+
+sid=$(jq -r 'select(.sessionID != null and .sessionID != "") | .sessionID' "$dir/events.jsonl" 2>/dev/null | head -1)
+final=$(jq -rs '[.[] | select(.type=="text") | .part.text] | last // ""' "$dir/events.jsonl" 2>/dev/null)
+err=$(jq -r 'select(.type=="error") | .error.message' "$dir/events.jsonl" 2>/dev/null | tail -1)
+tools=$(jq -r 'select(.type=="tool_use") | .part.tool' "$dir/events.jsonl" 2>/dev/null | sort | uniq -c | awk '{printf "%s×%s ", $2, $1}')
+
+if [[ -n $status_hint ]]; then state=$status_hint
+elif grep -q 'GoUsageLimitError' "$dir/events.jsonl"; then state=usage-limit
+elif [[ -n $err ]]; then state=failed
+else state=$(grep -oP '^STATUS:\s*\K\w+' <<<"$final" | tail -1); state=${state:-done}
+fi
+
+{
+  echo "OC RUN $run"
+  echo "state=$state model=$used_model time=$(( $(date +%s) - t0 ))s session=${sid:-none}"
+  [[ -n ${limit_note:-} ]] && echo "note: $limit_note"
+  [[ -n $tools ]] && echo "tools: $tools"
+  [[ -n $err ]] && echo "error: $err"
+  if git rev-parse --git-dir >/dev/null 2>&1 && [[ ${#worktree[@]} -eq 0 ]]; then
+    stat_out=$(git status --short 2>/dev/null | head -30)
+    [[ -n $stat_out ]] && { echo "worktree:"; echo "$stat_out"; }
+  fi
+  echo "---"
+  if [[ -n $final ]]; then
+    lines=$(wc -l <<<"$final")
+    if (( lines > REPORT_LINES )); then
+      echo "[first $REPORT_LINES of $lines lines; full: oc log $run]"
+      head -n "$REPORT_LINES" <<<"$final"
+    else
+      echo "$final"
+    fi
+  else
+    echo "(no final text)"
+  fi
+  echo "---"
+  [[ -n $sid ]] && echo "revise: oc -s $sid \"<feedback>\""
+  echo "events: $dir/events.jsonl"
+} > "$dir/report.md"
+
+
+printf '%s\n' "$final" > "$dir/final.txt"
+cat "$dir/report.md"
+
+case $state in
+  done) exit 0 ;; blocked) exit 2 ;; hung) exit 3 ;; timeout) exit 4 ;; usage-limit) exit 5 ;; *) exit 1 ;;
+esac

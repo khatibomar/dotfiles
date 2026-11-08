@@ -22,6 +22,7 @@ Personal dotfiles for Linux/macOS. This is not a buildable project — configs a
 | `config/konsolerc` | `~/.config/konsolerc` | Sets default Konsole profile to `ayn.profile` |
 | `nvim/` | `~/.config/nvim/` | |
 | `scripts/` | `~/scripts/` | |
+| `scripts/oc` | `~/.local/bin/oc` (link) | Claude-to-OpenCode executor bridge; linked by `scripts/install_ai_tools.sh` (option 4) |
 | `keys/*` | `~/.ssh/` / GPG keyring | Sensitive — only placeholders in repo |
 | `wallpapers/` | `~/.local/share/wallpapers/` | Set via `plasma-apply-wallpaperimage` |
 | `config/claude/*` | `~/.claude/` | Deployed by `scripts/install_ai_tools.sh` (option 1); won't overwrite an existing `settings.json` -- job-specific settings stay local, never committed |

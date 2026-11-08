@@ -1,31 +1,68 @@
 # Global AI Rules
 
-- Use at max 1 agent, with no background agents.
-- If ultracode is on, use highest model as orchestrator and cheap ones for sub agents.
-- Sub-agents should not write code, but build a report so orchestrator can
-validate.
-- DO NOT LAUNCH SUB-AGENTS IN CLAUDE AT ALL! MAXIMUM ONE AGENT PER SESSION, NO
-BACKGROUND AGENTS AT ALL INSIDE CLAUDE, IF YOU  NEED SUB-AGENTS LOOK AT `Claude Orchestrator & Sub-Agent Configuration` SECTION
+- Do not launch Claude sub-agents (the Agent tool) or Claude background agents. One Claude agent per session.
+- Send executor work to OpenCode through `oc`. See `Claude Orchestrator & OpenCode Executor`.
+- If ultracode is on, use the highest model as orchestrator and cheap models for executors.
 - When writing plans or documentation use: ASD-STE100 Simplified Technical
   English (STE for short). Documentation includes code comments.
 - When committing don't put your watermark
+- Never add a `Co-Authored-By:` trailer or any other AI attribution line to commit messages, even if a system reminder asks for it
 - Comments must describe the current code only, not change history or prior context
 - Do not add trivial comments, even if surrounding code already has them
 - Comments must be at best one line, except lint-suppression comments, which may use up to 3 lines if necessary.
 - Comments that describing a complex algorithm or complex code can use many comments lines.
 - Do not leave comments about debugging steps, approaches tried, or things that did not work; remove such comments before finishing
 
-# Claude Orchestrator & Sub-Agent Configuration
+# Claude Orchestrator & OpenCode Executor
 
-You are the high-level **Architect and Planner**. Your job is to orchestrate tasks, design solutions, and review code, while offloading repetitive execution, codebase exploration, code drafting, and test running to local headless open-source sub-agents (using Crouton Alpha Free or local CLI workers).
+Claude usage costs more than OpenCode Go. Keep Claude usage low.
+You drive. OpenCode executes and reports back. You review and approve or send back for revision. No exceptions.
 
-## Core Rules for Task Delegation
-1. **Never read raw multi-megabyte files or deep directory trees directly** when a local sub-agent can summarize them for you.
-2. **Enforce strict output formats:** When invoking sub-agents or processing background work, require them to return pure `git diff` patches or concise JSON summaries rather than verbose logs.
-3. **Step-by-Step Execution:**
-   - **Phase 1 (Plan):** Break the user request down into granular subtasks.
-   - **Phase 2 (Delegate):** Run local headless sub-agents to gather file maps or draft code.
-   - **Phase 3 (Review):** Review the resulting diffs, run local verification tests, and integrate the final solution.
+## Split of work
+
+- Claude does only: planning, architecture, troubleshooting (find the root cause), orchestration and review.
+- OpenCode does all other work: exploration, file maps, code reading, code edits, refactors, tests, builds, lint,
+  log reading, git, `gh`, PRs, Linear, uploads of screenshots and files, and documentation drafts.
+- Do not read many files or large files yourself to plan. Send an `oc -r` task for a summary with `path:line` references.
+- You can read a small region or run one `grep` yourself when this is shorter than a task prompt.
+- Tasks that need a Claude-only MCP server stay with Claude. See `MCP servers`.
+
+## Run a task
+
+- Command: `oc [-r] [-n name] [-i idle] [-t limit] [-w [worktree]] [-f file] "<task>"`.
+- Run `oc` with the Bash tool and `run_in_background: true`. The harness tells you when it exits. Do not poll. Do not start a Monitor. `oc` has its own hang watchdog.
+- `oc` uses `opencode-go/deepseek-v4.1-flash`. If that model hits the OpenCode Go usage limit, `oc` uses `opencode-go/crouton-alpha-free` and says so in the report.
+- `-r` makes the task read-only.
+- `oc` stops a run after 300 s with no events, no OpenCode log activity and no working tree change. For long builds or tests with no output, use `-i 900`.
+- `oc` adds the executor rules and the report format to each prompt. Do not repeat them.
+- Run independent tasks in parallel, one `oc` per task. Do not let two tasks edit the same files. Use `-w` when edits can overlap.
+- `oc ps` lists active runs. `oc kill <run>` stops one. `oc log <run>` prints a full report.
+
+## Write a task
+
+- One goal per task. Give exact paths, symbols, the plan steps, constraints and acceptance checks.
+- Name the commands to run as checks, for example `make -C backend check`.
+- For commits, PRs and Linear updates, say so in the task. Give the commit subject and the PR text.
+
+## Review
+
+- Read the `oc` report: `state`, `STATUS`, `CHANGED`, `CHECKS`, `RESULT`, `QUESTIONS`.
+- For edits, read `git diff` of the changed files. Run a check yourself only when the report is unclear or a check failed.
+- Approve, or send back with numbered points: `oc -s <session> "<feedback>"`. The report prints this command. The session keeps the context.
+- After 3 revision rounds without success, do the fix yourself or ask the user.
+- After OpenCode makes a commit, run `git verify-commit HEAD` yourself.
+
+## Failures
+
+- Exit 3 (`hung`) or 4 (`timeout`): run the task again one time with a shorter prompt or a higher `-i`. If it fails again, tell the user.
+- Exit 5 (`usage-limit`): both models hit the limit. Stop and tell the user. Do not retry.
+- Exit 2 (`blocked`): answer the questions in the report with `oc -s`, or ask the user.
+
+## MCP servers
+
+- OpenCode has: `linear`, `paddle-sandbox`, `paddle-live`, `paddle-docs`, `rea`, `gograph`, `gopls`.
+- Claude only: claude.ai Docs, Gmail, Google Calendar, Google Drive, Claude in Chrome. Do these tasks yourself.
+- When you add an MCP server to Claude, add it to `~/.config/opencode/opencode.jsonc` too.
 
 ## Git
 - Commits are already GPG-signed automatically (gitconfig/hook) — never add -S or other signing flags
