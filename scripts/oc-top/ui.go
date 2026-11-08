@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -644,11 +645,11 @@ func activityText(r *Run, width int) string {
 			}
 		case "finish":
 			line := fmt.Sprintf("%s  step finish  in %d  out %d  cost $%.4f", ts, e.TokensIn, e.TokensOut, e.Cost)
-			b.WriteString(styleDim.Render(fitDisplayText(line, width)))
+			b.WriteString(styleDim.Render(ansi.Truncate(line, width, "…")))
 			b.WriteString("\n")
 		case "error":
 			line := fmt.Sprintf("%s  ERROR %s", ts, shortOneLine(e.Message))
-			b.WriteString(styleRed.Render(fitDisplayText(line, width)))
+			b.WriteString(styleRed.Render(ansi.Truncate(line, width, "…")))
 			b.WriteString("\n")
 		}
 	}
@@ -675,6 +676,10 @@ func wrapText(s string, width int) []string {
 					line = ""
 				}
 				chunk := ansi.Truncate(word, width, "")
+				if chunk == "" {
+					_, size := utf8.DecodeRuneInString(word)
+					chunk = word[:size]
+				}
 				out = append(out, chunk)
 				word = strings.TrimPrefix(word, chunk)
 				if word == chunk {
@@ -737,13 +742,24 @@ func (m *model) header() string {
 		total += r.Cost
 	}
 	bad := counts["failed"] + counts["hung"] + counts["timeout"]
-	parts := []string{
-		styleTitle.Render("oc-top"),
-		styleDim.Render(fmt.Sprintf("  %d running · %d done · %d failed+hung+timeout · %d blocked · $%.4f total",
-			counts["running"], counts["done"], bad, counts["blocked"], total)),
-		styleDimLit.Render(fmt.Sprintf("  %s · follow %s", m.filterChips(), onOff(m.follow))),
+	title := styleTitle.Render("oc-top")
+	countsText := styleDim.Render(fmt.Sprintf("  %d running · %d done · %d failed+hung+timeout · %d blocked",
+		counts["running"], counts["done"], bad, counts["blocked"]))
+	cost := styleDim.Render(fmt.Sprintf(" · $%.4f total", total))
+	follow := styleDimLit.Render(fmt.Sprintf("  %s · follow %s", m.filterChips(), onOff(m.follow)))
+	header := title + countsText + cost + follow
+	if m.width > 0 && lipgloss.Width(header) > m.width {
+		header = title + countsText + follow
 	}
-	return strings.Join(parts, "")
+	if m.width > 0 && lipgloss.Width(header) > m.width {
+		header = title + countsText + styleDimLit.Render("  "+m.filterChips())
+	}
+	if m.width > 0 && lipgloss.Width(header) > m.width {
+		short := styleDim.Render(fmt.Sprintf("  %d run · %d ok · %d bad · %d blk",
+			counts["running"], counts["done"], bad, counts["blocked"]))
+		header = title + short + styleDimLit.Render("  "+m.filterChips())
+	}
+	return header
 }
 
 // filterChips renders the three filter modes with the active one highlighted.
