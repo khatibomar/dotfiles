@@ -4,7 +4,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "sh /home/omar/.claude/statusline-command.sh",
+    "command": "sh ~/.claude/statusline-command.sh",
     "refreshInterval": 2
   },
   "enabledPlugins": {
