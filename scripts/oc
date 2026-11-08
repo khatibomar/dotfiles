@@ -6,6 +6,7 @@
 #   oc ps                          list runs that are still active
 #   oc kill <run-name>             stop a run
 #   oc log <run-name>              print the full report of a run
+#   oc top                         open the run dashboard (oc-top)
 #
 # Options:
 #   -m model     model (default $OC_MODEL or opencode-go/deepseek-v4.1-flash)
@@ -15,10 +16,14 @@
 #   -w [name]    run in a new git worktree
 #   -i seconds   idle limit before the run counts as hung (default 300)
 #   -t seconds   hard time limit (default 2400)
+#   -c seconds   checkpoint: stop with state slow after this time so the reviewer can help (default 300, 0 = off)
 #   -r           read-only task: add "Do not edit any files" to the prompt
 #
-# Exit codes: 0 done, 1 failed, 2 blocked, 3 hung, 4 timeout, 5 usage limit.
+# Exit codes: 0 done, 1 failed, 2 blocked, 3 hung, 4 timeout, 5 usage limit, 6 slow (checkpoint).
 set -uo pipefail
+
+# Braces make bash parse the whole file before it runs, so edits do not break active runs.
+{
 
 OC_MODEL="${OC_MODEL:-opencode-go/deepseek-v4.1-flash}"
 OC_FALLBACK="${OC_FALLBACK:-opencode-go/crouton-alpha-free}"
@@ -52,11 +57,12 @@ case "${1:-}" in
   ps) cmd_ps; exit 0 ;;
   kill) cmd_kill "${2:?run name}"; exit 0 ;;
   log) cat "$OC_RUNS/${2:?run name}/report.md"; exit 0 ;;
+  top) shift; exec oc-top "$@" ;;
 esac
 
-model="$OC_MODEL" session="" name="task" idle_limit=300 hard_limit=2400 readonly=0
+model="$OC_MODEL" session="" name="task" idle_limit=300 hard_limit=2400 checkpoint=300 readonly=0
 files=() worktree=()
-while getopts ":m:s:n:f:w:i:t:r" opt; do
+while getopts ":m:s:n:f:w:i:t:c:r" opt; do
   case $opt in
     m) model=$OPTARG ;;
     s) session=$OPTARG ;;
@@ -65,6 +71,7 @@ while getopts ":m:s:n:f:w:i:t:r" opt; do
     w) worktree=(--worktree="$OPTARG") ;;
     i) idle_limit=$OPTARG ;;
     t) hard_limit=$OPTARG ;;
+    c) checkpoint=$OPTARG ;;
     r) readonly=1 ;;
     :) [[ $OPTARG == w ]] && worktree=(--worktree) || { echo "-$OPTARG needs a value" >&2; exit 64; } ;;
     *) echo "unknown option -$OPTARG" >&2; exit 64 ;;
@@ -79,6 +86,9 @@ task="$*"
 run="$name-$(date +%Y%m%d-%H%M%S)-$$"
 dir="$OC_RUNS/$run"
 mkdir -p "$dir"
+wt=""; ((${#worktree[@]})) && wt="${worktree[0]#--worktree=}"
+ro_bool=false; (( readonly )) && ro_bool=true
+jq -n --arg run "$run" --arg name "$name" --arg cwd "$PWD" --arg model "$model" --arg worktree "$wt" --arg session "$session" --argjson readonly "$ro_bool" --argjson idle_limit "$idle_limit" --argjson hard_limit "$hard_limit" --argjson checkpoint "$checkpoint" --argjson started "$(date +%s)" '{run:$run, name:$name, cwd:$cwd, model:$model, readonly:$readonly, worktree:$worktree, session:$session, idle_limit:$idle_limit, hard_limit:$hard_limit, checkpoint:$checkpoint, started:$started}' > "$dir/meta.json"
 
 ro_line=""
 (( readonly )) && ro_line="- Do not edit any files. This is a read-only task."
@@ -133,6 +143,7 @@ run_once() {
     fi
     if (( now - last_act >= idle_limit )); then status_hint=hung; break; fi
     if (( now - start >= hard_limit )); then status_hint=timeout; break; fi
+    if (( checkpoint > 0 && now - start >= checkpoint )); then status_hint=slow; break; fi
   done
   if [[ -n $status_hint ]]; then
     kill "$pid" 2>/dev/null; sleep 2; kill -9 "$pid" 2>/dev/null
@@ -148,6 +159,7 @@ if [[ -z $status_hint ]] && grep -q '"provider.go-limit"\|GoUsageLimitError' "$d
    && [[ $model != "$OC_FALLBACK" && -n $OC_FALLBACK ]]; then
   limit_note="$model hit the OpenCode Go usage limit; this run used $OC_FALLBACK."
   used_model=$OC_FALLBACK
+  jq --arg model "$OC_FALLBACK" '.model = $model' "$dir/meta.json" > "$dir/meta.json.tmp" && mv "$dir/meta.json.tmp" "$dir/meta.json"
   run_once "$OC_FALLBACK"
 fi
 
@@ -186,6 +198,7 @@ fi
   fi
   echo "---"
   [[ -n $sid ]] && echo "revise: oc -s $sid \"<feedback>\""
+  [[ $state == slow && -n $sid ]] && echo "resume: oc -s $sid \"Continue. Hint: <orchestrator hint>\""
   echo "events: $dir/events.jsonl"
 } > "$dir/report.md"
 
@@ -194,5 +207,9 @@ printf '%s\n' "$final" > "$dir/final.txt"
 cat "$dir/report.md"
 
 case $state in
-  done) exit 0 ;; blocked) exit 2 ;; hung) exit 3 ;; timeout) exit 4 ;; usage-limit) exit 5 ;; *) exit 1 ;;
+  done) rc=0 ;; blocked) rc=2 ;; hung) rc=3 ;; timeout) rc=4 ;; usage-limit) rc=5 ;; slow) rc=6 ;; *) rc=1 ;;
 esac
+ended=$(date +%s)
+jq -n --arg state "$state" --arg model "$used_model" --arg session "${sid:-}" --argjson ended "$ended" --argjson seconds "$(( ended - t0 ))" --argjson exit "$rc" '{state:$state, model:$model, session:$session, ended:$ended, seconds:$seconds, exit:$exit}' > "$dir/result.json"
+exit "$rc"
+}

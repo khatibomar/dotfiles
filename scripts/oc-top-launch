@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Focus the open oc-top Konsole window, or open a new one.
+set -uo pipefail
+
+if ! command -v oc-top >/dev/null 2>&1; then
+  echo "oc-top not installed: run make -C ~/code/dotfiles/scripts/oc-top install"
+  exit 1
+fi
+
+# Activate the KWin window that belongs to process $1.
+focus_window() {
+  local pid=$1 js name="oc-top-focus-$$" id
+  js=$(mktemp --suffix=.js)
+  cat > "$js" <<EOF
+for (const w of workspace.windowList()) {
+  if (w.pid === $pid) { w.minimized = false; workspace.activeWindow = w; }
+}
+EOF
+  id=$(gdbus call --session -d org.kde.KWin -o /Scripting -m org.kde.kwin.Scripting.loadScript "$js" "$name" 2>/dev/null | grep -oP '\d+')
+  [[ -n $id ]] && gdbus call --session -d org.kde.KWin -o "/Scripting/Script$id" -m org.kde.kwin.Script.run >/dev/null 2>&1
+  sleep 0.2
+  gdbus call --session -d org.kde.KWin -o /Scripting -m org.kde.kwin.Scripting.unloadScript "$name" >/dev/null 2>&1
+  rm -f "$js"
+  [[ -n $id ]]
+}
+
+for p in $(pgrep -x oc-top); do
+  parent=$(ps -o ppid= -p "$p" | tr -d ' ')
+  [[ $(ps -o comm= -p "$parent" 2>/dev/null) == konsole ]] || continue
+  if focus_window "$parent"; then
+    echo "focused open oc-top window"
+    exit 0
+  fi
+done
+
+if [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] && command -v konsole >/dev/null 2>&1; then
+  setsid -f konsole --separate --hide-menubar -e oc-top >/dev/null 2>&1
+  echo "opened oc-top in new Konsole window"
+else
+  echo "run oc-top in another terminal"
+fi

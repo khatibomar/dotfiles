@@ -75,3 +75,9 @@ KDE Wallet Manager, then run `gpgconf --reload gpg-agent` to clear the memory ca
 
 References: [Pinentry KDE opt-in](https://github.com/gpg/pinentry/blob/pinentry-1.3.2/pinentry/pinentry.c)
 and [KWallet Secret Service](https://github.com/KDE/kwallet).
+
+## oc dashboard
+
+`oc top` opens the oc-top executor dashboard. In Claude Code, `/oc-agents` runs
+`oc-top-launch`. Each `oc` run writes `meta.json` (start metadata) and
+`result.json` (final state) into its run directory.

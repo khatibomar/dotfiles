@@ -71,6 +71,8 @@ deploy_claude_config() {
 	mkdir -p "$HOME/.claude"
 	cp "$src_dir/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
 	print_success "Deployed statusline-command.sh to ~/.claude/"
+	ln -sfn "$src_dir/commands" "$HOME/.claude/commands"
+	print_success "Linked ~/.claude/commands to $src_dir/commands"
 
 	if [ -f "$HOME/.claude/settings.json" ]; then
 		print_warning "~/.claude/settings.json already exists, not overwriting (see $src_dir/settings.json to merge manually)"
@@ -406,6 +408,8 @@ deploy_oc_bridge() {
 	fi
 	ln -sfn "$repo_dir/scripts/oc" "$target"
 	print_success "Linked $target to $repo_dir/scripts/oc"
+	ln -sfn "$repo_dir/scripts/oc-top-launch" "$HOME/.local/bin/oc-top-launch"
+	print_success "Linked $HOME/.local/bin/oc-top-launch to $repo_dir/scripts/oc-top-launch"
 }
 
 main() {
