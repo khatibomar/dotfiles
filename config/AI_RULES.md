@@ -36,6 +36,11 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 - `oc` stops a run after 300 s with no events, no OpenCode log activity and no working tree change. For long builds or tests with no output, use `-i 900`.
 - `oc` adds the executor rules and the report format to each prompt. Do not repeat them.
 - Run independent tasks in parallel, one `oc` per task. Do not let two tasks edit the same files. Use `-w` when edits can overlap.
+- Split each phase into parallel `oc` tasks by file ownership when the files separate cleanly (for example: new modules, tests, docs, core changes).
+  - Give each task an explicit list of files it owns. Tell it not to edit other files.
+  - Executors cannot talk to each other. You coordinate: define shared interfaces first, then start the tasks.
+  - When one task needs the output of another, run them in sequence. Do not split a hot file (one file that most changes touch) across tasks.
+  - With `-w`, you merge the worktrees and fix conflicts after review.
 - `oc ps` lists active runs. `oc kill <run>` stops one. `oc log <run>` prints a full report.
 
 ## Write a task
