@@ -20,7 +20,9 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 
 ## Split of work
 
+- Roles: Claude is the orchestrator and the smart one. `oc` executors are the hard workers and free labor. Work as one team.
 - Claude does only: planning, architecture, troubleshooting (find the root cause), orchestration and review.
+- All planning is done by Claude. Do not give an executor a task to make the plan. Executors can collect facts for the plan.
 - OpenCode does all other work: exploration, file maps, code reading, code edits, refactors, tests, builds, lint,
   log reading, git, `gh`, PRs, Linear, uploads of screenshots and files, and documentation drafts.
 - Do not read many files or large files yourself to plan. Send an `oc -r` task for a summary with `path:line` references.
@@ -29,7 +31,7 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 
 ## Run a task
 
-- Command: `oc [-r] [-n name] [-i idle] [-t limit] [-w [worktree]] [-f file] "<task>"`.
+- Command: `oc [-r] [-n name] [-i idle] [-t limit] [-c checkpoint] [-w [worktree]] [-f file] "<task>"`.
 - Run `oc` with the Bash tool and `run_in_background: true`. The harness tells you when it exits. Do not poll. Do not start a Monitor. `oc` has its own hang watchdog.
 - `oc` uses `opencode-go/deepseek-v4.1-flash`. If that model hits the OpenCode Go usage limit, `oc` uses `opencode-go/crouton-alpha-free` and says so in the report.
 - `-r` makes the task read-only.
@@ -45,6 +47,8 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 
 ## Write a task
 
+- Start each task with an identity and a role, for example: "You are a senior Go backend engineer. Your role: implement the store layer only."
+- Make the role match the work: implementer, test writer, code explorer, reviewer, UI implementer, docs writer.
 - One goal per task. Give exact paths, symbols, the plan steps, constraints and acceptance checks.
 - Name the commands to run as checks, for example `make -C backend check`.
 - For commits, PRs and Linear updates, say so in the task. Give the commit subject and the PR text.
@@ -54,6 +58,11 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 - Read the `oc` report: `state`, `STATUS`, `CHANGED`, `CHECKS`, `RESULT`, `QUESTIONS`.
 - For edits, read `git diff` of the changed files. Run a check yourself only when the report is unclear or a check failed.
 - Approve, or send back with numbered points: `oc -s <session> "<feedback>"`. The report prints this command. The session keeps the context.
+- `oc` stops a run at the checkpoint (`-c`, default 300 s) with state `slow`. The OpenCode session stays open.
+  Read the report and `oc log <run>`. If the executor is on the right path, resume it: `oc -s <session> "Continue."`.
+  If it is stuck, help it: find the root cause yourself, then send the fix direction, the file and line, or a code hint with `oc -s <session>`.
+  Do not take over the full task. For long tasks that you know are on track, use a higher `-c` or `-c 0`.
+- If the report shows that the executor cannot find a solution, help it in the same way.
 - After 3 revision rounds without success, do the fix yourself or ask the user.
 - After OpenCode makes a commit, run `git verify-commit HEAD` yourself.
 
@@ -63,12 +72,23 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 - If the result is visible, verify it visually yourself after each run (browser, screenshot, app). Check every mode the change touches, for example normal, theater and fullscreen.
 - If the result is an API, run real requests against it and check the responses, status codes and failure paths.
 - For UI changes, do a self UI review after the executors finish: hierarchy, spacing, labels, focus, light and dark themes, mobile width, and the project UI rules.
+- UI design and the UI review stay with Claude. Before you plan UI work or review it, load the `frontend-design` skill.
+  Give the executor the design direction: layout, type scale, spacing scale, color tokens and states. Do not let it select the design.
+- Take screenshots and remove generic "AI slop" design. Send back each item you find:
+  - Default purple or blue gradients, glow effects, glassmorphism with no purpose.
+  - Emoji as icons, a card inside a card, too many borders and shadows, all corners with the same large radius.
+  - Spacing that does not follow one scale. Font sizes that do not follow one type scale. More than 2 font families.
+  - Center-aligned text blocks, hero sections and marketing copy in tools and dashboards.
+  - Placeholder copy ("Lorem", "Welcome to your dashboard"), vague labels, and buttons with no clear action.
+  - Missing states: empty, loading, error, disabled, hover and focus.
+  - Low contrast text, or a dark theme that only inverts the light theme.
 - Review the code yourself. Look for patterns, duplicate logic and shared causes.
 - Think in components, not single spots. When you find a bug, find the shared cause and fix it where all users of that code get the fix. Look for the same bug in similar code paths and fix them in the same pass.
 
 ## Failures
 
 - Exit 3 (`hung`) or 4 (`timeout`): run the task again one time with a shorter prompt or a higher `-i`. If it fails again, tell the user.
+- Exit 6 (`slow`): the checkpoint stopped the run. See `Review`.
 - Exit 5 (`usage-limit`): both models hit the limit. Stop and tell the user. Do not retry.
 - Exit 2 (`blocked`): answer the questions in the report with `oc -s`, or ask the user.
 
