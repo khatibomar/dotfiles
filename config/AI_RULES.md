@@ -57,6 +57,15 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 - After 3 revision rounds without success, do the fix yourself or ask the user.
 - After OpenCode makes a commit, run `git verify-commit HEAD` yourself.
 
+## Verify before you report done
+
+- Report a task as done only when every acceptance point passes. If a point fails or you could not check it, say so and do not call the task done.
+- If the result is visible, verify it visually yourself after each run (browser, screenshot, app). Check every mode the change touches, for example normal, theater and fullscreen.
+- If the result is an API, run real requests against it and check the responses, status codes and failure paths.
+- For UI changes, do a self UI review after the executors finish: hierarchy, spacing, labels, focus, light and dark themes, mobile width, and the project UI rules.
+- Review the code yourself. Look for patterns, duplicate logic and shared causes.
+- Think in components, not single spots. When you find a bug, find the shared cause and fix it where all users of that code get the fix. Look for the same bug in similar code paths and fix them in the same pass.
+
 ## Failures
 
 - Exit 3 (`hung`) or 4 (`timeout`): run the task again one time with a shorter prompt or a higher `-i`. If it fails again, tell the user.
