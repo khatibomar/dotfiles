@@ -2,12 +2,14 @@ package main
 
 import (
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 func TestSidebarRowsNeverExceedWidth(t *testing.T) {
@@ -37,6 +39,39 @@ func TestSidebarRowsNeverExceedWidth(t *testing.T) {
 		if strings.Contains(tc.name, "long") && !strings.Contains(row, "…") {
 			t.Errorf("%s: expected truncated ellipsis in %q", tc.name, row)
 		}
+	}
+
+	// Nested rows keep their guides and summary inside the sidebar width.
+	root := &Run{DirName: "root", Name: "root", State: "running", Running: true, Started: now.Add(-time.Hour), IdleLimit: 300}
+	child := &Run{DirName: "child", Parent: "root", Name: "child-with-a-long-name", State: "done", Started: now.Add(-50 * time.Minute)}
+	grand := &Run{DirName: "grand", Parent: "child", Name: "grandchild-with-a-long-name-that-will-truncate", State: "done", Started: now.Add(-40 * time.Minute)}
+	sibling := &Run{DirName: "sibling", Parent: "root", Name: "sibling", State: "running", Running: true, Started: now.Add(-30 * time.Minute), IdleLimit: 300}
+	runs := []*Run{root, child, grand, sibling}
+	for _, sideW := range []int{32, 24} {
+		m := model{runs: runs, now: now}
+		side := m.sidebar(sideW)
+		lines := strings.Split(side, "\n")
+		if len(lines) != len(runs)*2 {
+			t.Errorf("sideW=%d: got %d lines want %d", sideW, len(lines), len(runs)*2)
+		}
+		for _, line := range lines {
+			if w := lipgloss.Width(line); w > sideW {
+				t.Errorf("sideW=%d: line width=%d want <=%d line=%q", sideW, w, sideW, line)
+			}
+		}
+		if !strings.Contains(side, "├ ") || !strings.Contains(side, "└ ") {
+			t.Errorf("sideW=%d: child rows miss guide glyphs: %q", sideW, side)
+		}
+		if strings.Contains(side, "0 run") {
+			t.Errorf("sideW=%d: zero running count should be hidden: %q", sideW, side)
+		}
+		if !strings.Contains(side, "1 sub ·") {
+			t.Errorf("sideW=%d: quiet child summary missing: %q", sideW, side)
+		}
+	}
+	summaryModel := model{runs: runs, now: now}
+	if side := summaryModel.sidebar(32); !strings.Contains(side, "3 sub · 1 run") {
+		t.Errorf("parent row misses child summary: %q", side)
 	}
 }
 
@@ -421,5 +456,332 @@ func TestArrowTabKeysWrap(t *testing.T) {
 		if got.tab != tc.want {
 			t.Errorf("%s: tab=%d want %d", tc.name, got.tab, tc.want)
 		}
+	}
+}
+
+func treeStamp(min int) time.Time {
+	return time.Date(2026, 11, 8, 12, min, 0, 0, time.Local)
+}
+
+func runNames(runs []*Run) []string {
+	out := make([]string, 0, len(runs))
+	for _, r := range runs {
+		out = append(out, r.DirName)
+	}
+	return out
+}
+
+func TestArrangeRunsTree(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		runs []*Run
+		want []string
+	}{
+		{
+			name: "children follow parent oldest first",
+			runs: []*Run{
+				{DirName: "parent", Started: treeStamp(10)},
+				{DirName: "later", Parent: "parent", Started: treeStamp(30)},
+				{DirName: "earlier", Parent: "parent", Started: treeStamp(20)},
+				{DirName: "other", Started: treeStamp(5)},
+			},
+			want: []string{"parent", "earlier", "later", "other"},
+		},
+		{
+			name: "nested children stay under their parent",
+			runs: []*Run{
+				{DirName: "root", Started: treeStamp(10)},
+				{DirName: "child-a", Parent: "root", Started: treeStamp(20)},
+				{DirName: "grand", Parent: "child-a", Started: treeStamp(25)},
+				{DirName: "child-b", Parent: "root", Started: treeStamp(30)},
+			},
+			want: []string{"root", "child-a", "grand", "child-b"},
+		},
+		{
+			name: "top level keeps running first",
+			runs: []*Run{
+				{DirName: "old-running", Started: treeStamp(1), Running: true},
+				{DirName: "new-done", Started: treeStamp(40)},
+				{DirName: "mid-done", Started: treeStamp(20)},
+			},
+			want: []string{"old-running", "new-done", "mid-done"},
+		},
+		{
+			name: "missing parent shows top level",
+			runs: []*Run{
+				{DirName: "root", Started: treeStamp(10)},
+				{DirName: "orphan", Parent: "gone", Started: treeStamp(30)},
+			},
+			want: []string{"orphan", "root"},
+		},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := runNames(arrangeRuns(tc.runs))
+			if strings.Join(got, ",") != strings.Join(tc.want, ",") {
+				t.Errorf("order=%v want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestFilterRunningKeepsAncestors(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 11, 8, 19, 30, 0, 0, time.Local)
+	runs := []*Run{
+		{DirName: "parent", Started: now.Add(-48 * time.Hour), State: "done"},
+		{DirName: "child", Parent: "parent", Started: now.Add(-47 * time.Hour), Running: true, State: "running"},
+		{DirName: "grandchild", Parent: "child", Started: now.Add(-46 * time.Hour), Running: true, State: "running"},
+		{DirName: "unrelated", Started: now.Add(-2 * time.Hour), State: "done"},
+	}
+	m := model{now: now, filter: filterRunning}
+	got := runNames(m.visibleRuns(runs))
+	want := []string{"parent", "child", "grandchild"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Errorf("visible=%v want %v", got, want)
+	}
+}
+
+func TestTreeGuides(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		runs []*Run
+		want map[string]string
+	}{
+		{
+			name: "first middle last child",
+			runs: []*Run{
+				{DirName: "root", Started: treeStamp(0)},
+				{DirName: "first", Parent: "root", Started: treeStamp(1)},
+				{DirName: "middle", Parent: "root", Started: treeStamp(2)},
+				{DirName: "last", Parent: "root", Started: treeStamp(3)},
+			},
+			want: map[string]string{"root": "", "first": "├ ", "middle": "├ ", "last": "└ "},
+		},
+		{
+			name: "depth two keeps the ancestor bar",
+			runs: []*Run{
+				{DirName: "root", Started: treeStamp(0)},
+				{DirName: "child-a", Parent: "root", Started: treeStamp(1)},
+				{DirName: "grand-a", Parent: "child-a", Started: treeStamp(2)},
+				{DirName: "child-b", Parent: "root", Started: treeStamp(3)},
+				{DirName: "grand-b", Parent: "child-b", Started: treeStamp(4)},
+			},
+			want: map[string]string{
+				"root":    "",
+				"child-a": "├ ",
+				"grand-a": "│ └ ",
+				"child-b": "└ ",
+				"grand-b": "  └ ",
+			},
+		},
+		{
+			name: "single child uses the corner",
+			runs: []*Run{
+				{DirName: "root", Started: treeStamp(0)},
+				{DirName: "only", Parent: "root", Started: treeStamp(1)},
+				{DirName: "grand", Parent: "only", Started: treeStamp(2)},
+			},
+			want: map[string]string{"root": "", "only": "└ ", "grand": "  └ "},
+		},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			rows := treeRows(arrangeRuns(tc.runs))
+			for i, row := range rows {
+				want, ok := tc.want[row.run.DirName]
+				if !ok {
+					t.Fatalf("unexpected row %q", row.run.DirName)
+				}
+				if got := treeGuides(rows, i); got != want {
+					t.Errorf("%s: guides=%q want %q", row.run.DirName, got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestTreeGuidesSub(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		runs []*Run
+		want map[string]string
+	}{
+		{
+			name: "connector becomes a continuation bar",
+			runs: []*Run{
+				{DirName: "root", Started: treeStamp(0)},
+				{DirName: "first", Parent: "root", Started: treeStamp(1)},
+				{DirName: "last", Parent: "root", Started: treeStamp(2)},
+			},
+			want: map[string]string{"root": "", "first": "│ ", "last": "  "},
+		},
+		{
+			name: "depth two keeps ancestors and drops the corner",
+			runs: []*Run{
+				{DirName: "root", Started: treeStamp(0)},
+				{DirName: "child-a", Parent: "root", Started: treeStamp(1)},
+				{DirName: "grand-a", Parent: "child-a", Started: treeStamp(2)},
+				{DirName: "child-b", Parent: "root", Started: treeStamp(3)},
+				{DirName: "grand-b", Parent: "child-b", Started: treeStamp(4)},
+			},
+			want: map[string]string{
+				"root":    "",
+				"child-a": "│ ",
+				"grand-a": "│   ",
+				"child-b": "  ",
+				"grand-b": "    ",
+			},
+		},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			rows := treeRows(arrangeRuns(tc.runs))
+			for i, row := range rows {
+				want, ok := tc.want[row.run.DirName]
+				if !ok {
+					t.Fatalf("unexpected row %q", row.run.DirName)
+				}
+				if got := treeGuidesSub(rows, i); got != want {
+					t.Errorf("%s: sub guides=%q want %q", row.run.DirName, got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestSidebarTreeLayout(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+	build := &Run{DirName: "build", Name: "build", State: "done", Started: now.Add(-time.Hour)}
+	api := &Run{DirName: "api", Parent: "build", Name: "api", State: "done", Started: now.Add(-50 * time.Minute)}
+	apiTests := &Run{DirName: "api-tests", Parent: "api", Name: "api-tests", State: "done", Started: now.Add(-40 * time.Minute)}
+	docs := &Run{DirName: "docs", Parent: "build", Name: "docs", State: "done", Started: now.Add(-30 * time.Minute)}
+	m := model{runs: []*Run{build, api, apiTests, docs}, now: now, sel: -1}
+	lines := strings.Split(ansi.Strip(m.sidebar(32)), "\n")
+	if len(lines) != 8 {
+		t.Fatalf("got %d lines want 8: %q", len(lines), lines)
+	}
+	headWants := map[int]string{
+		0: "  ✓  build",
+		2: "  ├ ✓  api",
+		4: "  │ └ ✓  api-tests",
+		6: "  └ ✓  docs",
+	}
+	for idx, want := range headWants {
+		if !strings.HasPrefix(lines[idx], want) {
+			t.Errorf("head line %d=%q want prefix %q", idx, lines[idx], want)
+		}
+	}
+	subWants := map[int]string{
+		1: "  3 sub · (no tools yet)",
+		3: "  │ 1 sub · (no tools yet)",
+		5: "  │   (no tools yet)",
+		7: "    (no tools yet)",
+	}
+	for idx, want := range subWants {
+		if !strings.HasPrefix(lines[idx], want) {
+			t.Errorf("sub line %d=%q want prefix %q", idx, lines[idx], want)
+		}
+	}
+
+	m.sel = 2
+	lines = strings.Split(ansi.Strip(m.sidebar(32)), "\n")
+	if !strings.HasPrefix(lines[4], "▌ │ └ ✓  api-tests") {
+		t.Errorf("selected depth-two row=%q want marker in column 0 and full name", lines[4])
+	}
+}
+
+func TestRunAt(t *testing.T) {
+	t.Parallel()
+	runsOf := func(n int) []*Run {
+		runs := make([]*Run, n)
+		for i := range runs {
+			runs[i] = &Run{DirName: "run" + strconv.Itoa(i)}
+		}
+		return runs
+	}
+	cases := []struct {
+		name   string
+		rows   int
+		sel    int
+		height int
+		y      int
+		want   int
+	}{
+		{"first line of first row", 12, 0, 11, 2, 0},
+		{"second line of first row", 12, 0, 11, 3, 0},
+		{"first line of second row", 12, 0, 11, 4, 1},
+		{"scrolled first line", 12, 6, 11, 2, 3},
+		{"scrolled second line", 12, 6, 11, 3, 3},
+		{"scrolled next row", 12, 6, 11, 4, 4},
+		{"above the list", 12, 0, 11, 1, -1},
+		{"below the list", 12, 0, 11, 10, -1},
+		{"past the last run", 2, 0, 11, 6, -1},
+		{"empty list", 0, 0, 11, 2, -1},
+		{"unknown height", 12, 0, 0, 2, -1},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			m := model{height: tc.height, sel: tc.sel, runs: runsOf(tc.rows)}
+			if got := m.runAt(tc.y); got != tc.want {
+				t.Errorf("runAt(%d)=%d want %d", tc.y, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestMouseSidebarClickSelectsRun(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+	newM := func() model {
+		m := model{
+			width:  100,
+			height: 20,
+			now:    now,
+			runs: []*Run{
+				{Dir: t.TempDir(), DirName: "a", Name: "a", Started: now, State: "done"},
+				{Dir: t.TempDir(), DirName: "b", Name: "b", Started: now.Add(-time.Minute), State: "done"},
+			},
+			yoffsets: map[string]int{},
+		}
+		m.resizeViewport()
+		m.refreshContent()
+		return m
+	}
+
+	m := newM()
+	next, _ := m.Update(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 3, Y: 4})
+	m = derefModel(next)
+	if m.selName != "b" {
+		t.Errorf("sidebar click selected %q want b", m.selName)
+	}
+	if m.builtRun != "b" {
+		t.Errorf("right pane built for %q want b", m.builtRun)
+	}
+
+	next, _ = m.Update(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 3, Y: 2})
+	m = derefModel(next)
+	if m.selName != "a" {
+		t.Errorf("sidebar click selected %q want a", m.selName)
+	}
+
+	// A press outside the sidebar keeps the current selection.
+	m = newM()
+	next, _ = m.Update(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 60, Y: 4})
+	m = derefModel(next)
+	if m.selName != "a" {
+		t.Errorf("click outside sidebar selected %q want a", m.selName)
 	}
 }

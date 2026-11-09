@@ -19,13 +19,16 @@ type Run struct {
 	Name    string
 	Started time.Time
 
-	PID     int
-	Running bool
-	State   string // running, done, failed, blocked, hung, timeout, usage-limit
+	Parent string // parent run's state dir name; empty for top-level
+	Depth  int    // nesting depth from meta.json, 0 for top-level
+
+	PID           int
+	Running       bool
+	State         string // running, done, failed, blocked, hung, timeout, usage-limit
 	RevisionLabel string // "base label ↻N" for -s revision runs
-	Model   string
-	Session string
-	Cwd     string
+	Model         string
+	Session       string
+	Cwd           string
 
 	IdleLimit int
 	HardLimit int
@@ -151,6 +154,8 @@ func pidAlive(pid int) bool {
 type metaJSON struct {
 	Run       string `json:"run"`
 	Name      string `json:"name"`
+	Parent    string `json:"parent"`
+	Depth     int    `json:"depth"`
 	Cwd       string `json:"cwd"`
 	Model     string `json:"model"`
 	Readonly  bool   `json:"readonly"`
@@ -349,6 +354,8 @@ func (s *Scanner) load(dir string, prev *Run) *Run {
 		}
 		r.Model = meta.Model
 		r.Session = meta.Session
+		r.Parent = meta.Parent
+		r.Depth = meta.Depth
 	}
 	if r.IdleLimit == 0 {
 		r.IdleLimit = 300

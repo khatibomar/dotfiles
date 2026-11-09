@@ -108,15 +108,219 @@ func sortRuns(runs []*Run) {
 	})
 }
 
-// filtered returns the runs visible under the active filter mode.
-func (m *model) filtered(all []*Run) []*Run {
-	out := make([]*Run, 0, len(all))
+// parentRun returns the parent of r when it exists in this scan, else nil.
+func parentRun(r *Run, byName map[string]*Run) *Run {
+	if r.Parent == "" {
+		return nil
+	}
+	p, ok := byName[r.Parent]
+	if !ok || p == r {
+		return nil
+	}
+	seen := map[*Run]bool{r: true}
+	for cur := p; cur != nil; {
+		if seen[cur] {
+			return nil
+		}
+		seen[cur] = true
+		if cur.Parent == "" {
+			break
+		}
+		next, ok := byName[cur.Parent]
+		if !ok || next == cur {
+			break
+		}
+		cur = next
+	}
+	return p
+}
+
+// arrangeRuns returns runs in tree display order, with children after parents.
+func arrangeRuns(all []*Run) []*Run {
+	if len(all) == 0 {
+		return nil
+	}
+	byName := make(map[string]*Run, len(all))
 	for _, r := range all {
-		if keepRun(r, m.now, m.filter) {
+		byName[r.DirName] = r
+	}
+	children := map[*Run][]*Run{}
+	var roots []*Run
+	for _, r := range all {
+		p := parentRun(r, byName)
+		if p == nil {
+			roots = append(roots, r)
+			continue
+		}
+		children[p] = append(children[p], r)
+	}
+	sortRuns(roots)
+	sortChildren := func(list []*Run) {
+		sort.SliceStable(list, func(i, j int) bool {
+			if !list[i].Started.Equal(list[j].Started) {
+				return list[i].Started.Before(list[j].Started)
+			}
+			return list[i].DirName < list[j].DirName
+		})
+	}
+	out := make([]*Run, 0, len(all))
+	seen := map[*Run]bool{}
+	var walk func(r *Run)
+	walk = func(r *Run) {
+		if seen[r] {
+			return
+		}
+		seen[r] = true
+		out = append(out, r)
+		kids := children[r]
+		sortChildren(kids)
+		for _, c := range kids {
+			walk(c)
+		}
+	}
+	for _, r := range roots {
+		walk(r)
+	}
+	if len(out) < len(all) {
+		// Parent cycles can strand runs; show them as top-level instead.
+		var rest []*Run
+		for _, r := range all {
+			if !seen[r] {
+				rest = append(rest, r)
+			}
+		}
+		sortRuns(rest)
+		for _, r := range rest {
+			walk(r)
+		}
+	}
+	return out
+}
+
+// visibleRuns returns filtered runs in tree order, keeping matching ancestors.
+func (m *model) visibleRuns(all []*Run) []*Run {
+	ordered := arrangeRuns(all)
+	if len(ordered) == 0 {
+		return nil
+	}
+	byName := make(map[string]*Run, len(ordered))
+	for _, r := range ordered {
+		byName[r.DirName] = r
+	}
+	keep := make(map[*Run]bool, len(ordered))
+	for _, r := range ordered {
+		if !keepRun(r, m.now, m.filter) {
+			continue
+		}
+		keep[r] = true
+		seen := map[*Run]bool{r: true}
+		for p := byName[r.Parent]; p != nil && !seen[p]; p = byName[p.Parent] {
+			seen[p] = true
+			keep[p] = true
+		}
+	}
+	out := make([]*Run, 0, len(ordered))
+	for _, r := range ordered {
+		if keep[r] {
 			out = append(out, r)
 		}
 	}
 	return out
+}
+
+// treeRow is one displayed run plus its visible tree geometry.
+type treeRow struct {
+	run   *Run
+	level int
+	last  bool // last visible child of its parent
+}
+
+// treeRows annotates display-ordered runs with their visible tree level.
+func treeRows(runs []*Run) []treeRow {
+	rows := make([]treeRow, len(runs))
+	levelOf := make(map[string]int, len(runs))
+	for i, r := range runs {
+		level := 0
+		if r.Parent != "" {
+			if parentLevel, ok := levelOf[r.Parent]; ok {
+				level = parentLevel + 1
+			}
+		}
+		levelOf[r.DirName] = level
+		rows[i] = treeRow{run: r, level: level}
+	}
+	for i := range rows {
+		rows[i].last = true
+		for j := i + 1; j < len(rows); j++ {
+			if rows[j].level < rows[i].level {
+				break
+			}
+			if rows[j].level == rows[i].level {
+				rows[i].last = false
+				break
+			}
+		}
+	}
+	return rows
+}
+
+// treeGuides returns the plain guide prefix for one row, including its connector.
+func treeGuides(rows []treeRow, i int) string {
+	if i < 0 || i >= len(rows) || rows[i].level == 0 {
+		return ""
+	}
+	guides := treeAncestorGuides(rows, i)
+	if rows[i].last {
+		return guides + "└ "
+	}
+	return guides + "├ "
+}
+
+// treeGuidesSub returns second-line guides: ancestors plus a continuation cell.
+func treeGuidesSub(rows []treeRow, i int) string {
+	if i < 0 || i >= len(rows) || rows[i].level == 0 {
+		return ""
+	}
+	guides := treeAncestorGuides(rows, i)
+	if rows[i].last {
+		return guides + "  "
+	}
+	return guides + "│ "
+}
+
+// treeAncestorGuides returns the continuation columns above the row's level.
+func treeAncestorGuides(rows []treeRow, i int) string {
+	var b strings.Builder
+	for level := 1; level < rows[i].level; level++ {
+		cont := false
+		for j := i - 1; j >= 0; j-- {
+			if rows[j].level == level {
+				cont = !rows[j].last
+				break
+			}
+		}
+		if cont {
+			b.WriteString("│ ")
+		} else {
+			b.WriteString("  ")
+		}
+	}
+	return b.String()
+}
+
+// treeStats counts the descendants of each row and how many are running.
+func treeStats(rows []treeRow) (subs, running []int) {
+	subs = make([]int, len(rows))
+	running = make([]int, len(rows))
+	for i := range rows {
+		for j := i + 1; j < len(rows) && rows[j].level > rows[i].level; j++ {
+			subs[i]++
+			if rows[j].run.Running {
+				running[i]++
+			}
+		}
+	}
+	return
 }
 
 // keepRun reports whether one run belongs in the selected filter mode.
@@ -161,8 +365,7 @@ func nextFilter(mode filterMode) filterMode {
 
 func (m *model) rebuildRuns() {
 	all := m.scanner.Runs()
-	view := m.filtered(all)
-	sortRuns(view)
+	view := m.visibleRuns(all)
 	m.runs = view
 	// Keep the selected run by its stable directory id, not by index.
 	// The id is not a user-chosen name, so it stays put when rows re-sort.
@@ -254,6 +457,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if idx := m.tabAt(msg.X); idx >= 0 {
 				m.tab = idx
 				m.refreshContent()
+			}
+		}
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
+			if sideW, _ := m.layout(); msg.X < sideW {
+				if idx := m.runAt(msg.Y); idx >= 0 {
+					m.setSelection(idx)
+					m.refreshContent()
+				}
 			}
 		}
 		if (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) && m.mouseInViewport(msg) {
@@ -849,10 +1060,14 @@ func (m *model) sidebar(sideW int) string {
 		}
 		return b.String()
 	}
-	for i, r := range m.runs {
+	rows := treeRows(m.runs)
+	subs, running := treeStats(rows)
+	for i, row := range rows {
+		r := row.run
 		sel := i == m.sel
-		head := rowHead(r, m.now, m.frame, sideW, sel)
-		sub := fmt.Sprintf("  %s", subLine(r))
+		indent := treeGuides(rows, i)
+		head := rowHeadAt(r, m.now, m.frame, sideW, sel, indent)
+		sub := sidebarSubLine(treeGuidesSub(rows, i), subLineInfo(r, subs[i], running[i]), sideW)
 		if sel {
 			b.WriteString(styleRowSel.Width(sideW).Render(head))
 		} else {
@@ -860,20 +1075,40 @@ func (m *model) sidebar(sideW int) string {
 		}
 		b.WriteString("\n")
 		if sel {
-			b.WriteString(styleRowSel.Width(sideW).Render(styleDimLit.Render(sub)))
+			b.WriteString(styleRowSel.Width(sideW).Render(sub))
 		} else {
-			b.WriteString(styleRow.Width(sideW).Render(styleDimLit.Render(sub)))
+			b.WriteString(styleRow.Width(sideW).Render(sub))
 		}
-		if i < len(m.runs)-1 {
+		if i < len(rows)-1 {
 			b.WriteString("\n")
 		}
 	}
 	return b.String()
 }
 
+// sidebarSubLine renders the indented, width-fitted dim second line of a row.
+func sidebarSubLine(guides, text string, sideW int) string {
+	body := fitDisplayText(text, sideW-2-runewidth.StringWidth(guides))
+	line := "  " + styleDim.Render(guides) + styleDimLit.Render(body)
+	return truncateRow(line, sideW)
+}
+
+// truncateRow clips a styled line to a display width.
+func truncateRow(line string, width int) string {
+	if width <= 0 || lipgloss.Width(line) <= width {
+		return line
+	}
+	return ansi.Truncate(line, width, "…")
+}
+
 // rowHead builds one sidebar head line that always fits sideW columns.
 // The glyph, name, and metric blocks all have fixed widths, so columns align.
 func rowHead(r *Run, now time.Time, frame, sideW int, selected bool) string {
+	return rowHeadAt(r, now, frame, sideW, selected, "")
+}
+
+// rowHeadAt builds one sidebar head line, prefixed by a plain tree guide.
+func rowHeadAt(r *Run, now time.Time, frame, sideW int, selected bool, indent string) string {
 	glyphText := glyph(r, frame)
 	elapsed := fmtDur(r.elapsed(now))
 	idlePlain := ""
@@ -889,20 +1124,23 @@ func rowHead(r *Run, now time.Time, frame, sideW int, selected bool) string {
 		prefix = "▌ "
 	}
 
-	// prefix + glyph cell + spaces + metrics + name must fit sideW.
-	metricsWidth := 15
-	fixed := runewidth.StringWidth(prefix) + 2 + 1 + 1 + metricsWidth
-	nameWidth := sideW - fixed
+	indentWidth := runewidth.StringWidth(indent)
+	metricsWidth := 15 - indentWidth
+	if metricsWidth < 8 {
+		metricsWidth = 8
+	}
+	avail := sideW - runewidth.StringWidth(prefix) - indentWidth - 4
+	nameWidth := avail - metricsWidth
 	if nameWidth > 18 {
 		nameWidth = 18
 	}
-	if sideW < 32 {
-		metricsWidth = sideW - runewidth.StringWidth(prefix) - 2 - 1 - 1 - 4
-		if metricsWidth < 8 {
-			metricsWidth = 8
+	if nameWidth < 8 {
+		// Give the name its floor first; the metrics block absorbs the guide.
+		nameWidth = 8
+		metricsWidth = avail - nameWidth
+		if metricsWidth < 0 {
+			metricsWidth = 0
 		}
-		metrics = elapsed + idlePlain
-		nameWidth = sideW - (runewidth.StringWidth(prefix) + 2 + 1 + 1 + metricsWidth)
 	}
 	if nameWidth < 4 {
 		nameWidth = 4
@@ -922,7 +1160,8 @@ func rowHead(r *Run, now time.Time, frame, sideW int, selected bool) string {
 	if gap := 2 - runewidth.StringWidth(glyphText); gap > 0 {
 		glyphPad = strings.Repeat(" ", gap)
 	}
-	return prefix + glyphStyle(r.State).Render(glyphText) + glyphPad + " " + name + namePad + " " + metricsPad + metricsRendered
+	line := prefix + styleDim.Render(indent) + glyphStyle(r.State).Render(glyphText) + glyphPad + " " + name + namePad + " " + metricsPad + metricsRendered
+	return truncateRow(line, sideW)
 }
 
 // fitDisplayText truncates plain text to a display width, ending in … when cut.
@@ -948,6 +1187,11 @@ func fitDisplayText(s string, width int) string {
 
 // subLine is the dim second line of one sidebar row.
 func subLine(r *Run) string {
+	return subLineInfo(r, 0, 0)
+}
+
+// subLineInfo is subLine plus a child summary for rows that have children.
+func subLineInfo(r *Run, subs, running int) string {
 	base := ""
 	if r.ToolCount == 0 {
 		base = "(no tools yet)"
@@ -955,7 +1199,14 @@ func subLine(r *Run) string {
 		base = fmt.Sprintf("last %s · %d calls", r.LastTool, r.ToolCount)
 	}
 	if r.State == "ended" {
-		return "ended · " + base
+		base = "ended · " + base
+	}
+	if subs > 0 {
+		summary := fmt.Sprintf("%d sub", subs)
+		if running > 0 {
+			summary += fmt.Sprintf(" · %d run", running)
+		}
+		base = summary + " · " + base
 	}
 	return base
 }
@@ -1015,6 +1266,26 @@ func sideWindow(sel, rows int, height int) (start int) {
 		}
 	}
 	return
+}
+
+// runAt maps a sidebar screen row to a run index, or -1 outside the list.
+func (m *model) runAt(y int) int {
+	if m.height <= 0 || len(m.runs) == 0 {
+		return -1
+	}
+	mainH := m.height - 3 // header, tab bar, footer
+	if mainH < 2 {
+		mainH = 2
+	}
+	if y < 2 || y >= 2+mainH {
+		return -1
+	}
+	line := sideWindow(m.sel, len(m.runs), mainH) + (y - 2)
+	idx := line / 2
+	if idx < 0 || idx >= len(m.runs) {
+		return -1
+	}
+	return idx
 }
 
 // paneSeparator draws the vertical divider between the two panes.

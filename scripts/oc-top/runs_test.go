@@ -148,6 +148,42 @@ func TestMetaResultPrecedence(t *testing.T) {
 	}
 }
 
+func TestMetaParentDepth(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "child-20261108-120000-2", "meta.json"),
+		`{"name":"child","parent":"parent-20261108-120000-1","depth":1,"started":1730000100}`)
+	writeFile(t, filepath.Join(dir, "parent-20261108-120000-1", "meta.json"),
+		`{"name":"parent","started":1730000000}`)
+
+	sc := NewScanner(dir)
+	runs := sc.Scan()
+	if len(runs) != 2 {
+		t.Fatalf("got %d runs, want 2", len(runs))
+	}
+	byName := map[string]*Run{}
+	for _, r := range runs {
+		byName[r.DirName] = r
+	}
+	child := byName["child-20261108-120000-2"]
+	if child == nil {
+		t.Fatal("missing child run")
+	}
+	if child.Parent != "parent-20261108-120000-1" {
+		t.Errorf("Parent=%q want parent dir", child.Parent)
+	}
+	if child.Depth != 1 {
+		t.Errorf("Depth=%d want 1", child.Depth)
+	}
+	parent := byName["parent-20261108-120000-1"]
+	if parent == nil {
+		t.Fatal("missing parent run")
+	}
+	if parent.Parent != "" || parent.Depth != 0 {
+		t.Errorf("old run parent=%q depth=%d want empty/0", parent.Parent, parent.Depth)
+	}
+}
+
 func TestReportFallback(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
