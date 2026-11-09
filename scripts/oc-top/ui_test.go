@@ -320,3 +320,106 @@ func TestPerTabScrollOffsets(t *testing.T) {
 func runDirName(path string) string {
 	return filepath.Base(path)
 }
+
+func TestTabAtColumns(t *testing.T) {
+	t.Parallel()
+	for _, active := range []struct {
+		name string
+		tab  int
+	}{
+		{"activity active", tabActivity},
+		{"prompt active", tabPrompt},
+		{"report active", tabReport},
+		{"stderr active", tabStderr},
+	} {
+		m := model{tab: active.tab}
+		labels := m.tabLabels()
+		col := 0
+		for i, label := range labels {
+			w := lipgloss.Width(label)
+			cases := []struct {
+				name string
+				x    int
+			}{
+				{"first", col},
+				{"middle", col + w/2},
+				{"last", col + w - 1},
+			}
+			for _, tc := range cases {
+				if got := m.tabAt(tc.x); got != i {
+					t.Errorf("%s: tab %d %s column %d: tabAt=%d want %d", active.name, i, tc.name, tc.x, got, i)
+				}
+			}
+			if i < len(labels)-1 {
+				if got := m.tabAt(col + w); got != -1 {
+					t.Errorf("%s: separator after tab %d column %d: tabAt=%d want -1", active.name, i, col+w, got)
+				}
+			}
+			col += w + 1
+		}
+		if got := m.tabAt(col); got != -1 {
+			t.Errorf("%s: past end column %d: tabAt=%d want -1", active.name, col, got)
+		}
+	}
+	empty := model{}
+	if got := empty.tabAt(-1); got != -1 {
+		t.Errorf("negative column: tabAt=%d want -1", got)
+	}
+}
+
+func TestMouseTabClick(t *testing.T) {
+	t.Parallel()
+	newM := func() model {
+		m := model{width: 100, height: 20, now: time.Now(), yoffsets: map[string]int{}}
+		m.resizeViewport()
+		return m
+	}
+	// column of the first cell of the Report tab.
+	probe := newM()
+	x := 0
+	for i, label := range probe.tabLabels() {
+		if i == tabReport {
+			break
+		}
+		x += lipgloss.Width(label) + 1
+	}
+	x++ // past the left padding cell
+
+	m := newM()
+	next, _ := m.Update(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: x, Y: 1})
+	m = derefModel(next)
+	if m.tab != tabReport {
+		t.Errorf("left press on tab bar: tab=%d want %d", m.tab, tabReport)
+	}
+
+	m = newM()
+	next, _ = m.Update(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: x, Y: 5})
+	m = derefModel(next)
+	if m.tab != tabActivity {
+		t.Errorf("left press below tab bar: tab=%d want %d", m.tab, tabActivity)
+	}
+}
+
+func TestArrowTabKeysWrap(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		msg  tea.KeyMsg
+		from int
+		want int
+	}{
+		{"right wraps", tea.KeyMsg{Type: tea.KeyRight}, tabStderr, tabActivity},
+		{"l wraps", tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}}, tabStderr, tabActivity},
+		{"left wraps", tea.KeyMsg{Type: tea.KeyLeft}, tabActivity, tabStderr},
+		{"h wraps", tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}}, tabActivity, tabStderr},
+	}
+	for _, tc := range cases {
+		m := model{width: 100, height: 20, tab: tc.from, now: time.Now(), yoffsets: map[string]int{}}
+		m.resizeViewport()
+		next, _ := m.updateKeys(tc.msg)
+		got := derefModel(next)
+		if got.tab != tc.want {
+			t.Errorf("%s: tab=%d want %d", tc.name, got.tab, tc.want)
+		}
+	}
+}

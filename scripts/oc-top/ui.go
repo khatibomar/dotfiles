@@ -250,6 +250,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m.updateKeys(msg)
 	case tea.MouseMsg:
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y == 1 {
+			if idx := m.tabAt(msg.X); idx >= 0 {
+				m.tab = idx
+				m.refreshContent()
+			}
+		}
 		if (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) && m.mouseInViewport(msg) {
 			switch msg.Button {
 			case tea.MouseButtonWheelUp:
@@ -321,9 +327,9 @@ func (m *model) updateKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.recordScroll()
 	case "?":
 		m.helpFull = !m.helpFull
-	case "tab":
+	case "tab", "right", "l":
 		m.tab = (m.tab + 1) % tabCount
-	case "shift+tab":
+	case "shift+tab", "left", "h":
 		m.tab = (m.tab + tabCount - 1) % tabCount
 	case "1", "2", "3", "4":
 		m.tab = int(k[0] - '1')
@@ -777,16 +783,38 @@ func (m *model) filterChips() string {
 	return strings.Join(parts, " ")
 }
 
-func (m *model) tabBar() string {
-	var tabs []string
+// tabLabels renders the tab labels; tabBar and tabAt share it so hits match the drawing.
+func (m *model) tabLabels() []string {
+	tabs := make([]string, 0, len(styleTabName))
 	for i, name := range styleTabName {
+		label := fmt.Sprintf("%d %s", i+1, name)
 		if i == m.tab {
-			tabs = append(tabs, styleTabOn.Render(fmt.Sprintf("%d %s", i+1, name)))
+			tabs = append(tabs, styleTabOn.Render(label))
 		} else {
-			tabs = append(tabs, styleTab.Render(fmt.Sprintf("%d %s", i+1, name)))
+			tabs = append(tabs, styleTab.Render(label))
 		}
 	}
-	bar := strings.Join(tabs, " ")
+	return tabs
+}
+
+// tabAt returns the tab under column x of the tab bar, or -1.
+func (m *model) tabAt(x int) int {
+	if x < 0 {
+		return -1
+	}
+	col := 0
+	for i, label := range m.tabLabels() {
+		w := lipgloss.Width(label)
+		if x >= col && x < col+w {
+			return i
+		}
+		col += w + 1 // tabs are joined by one separating space
+	}
+	return -1
+}
+
+func (m *model) tabBar() string {
+	bar := strings.Join(m.tabLabels(), " ")
 	pos := styleDim.Render(m.scrollText())
 	if m.width <= 0 {
 		return bar
