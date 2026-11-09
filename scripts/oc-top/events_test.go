@@ -129,7 +129,7 @@ func TestSummaryInput(t *testing.T) {
 		{"skill", `{}`, ""},
 		{"bash", `{"command":""}`, ""},
 		{"shell", `{"command":"echo  hello   world"}`, "echo hello world"},
-		{"shell", `{"command":"` + strings.Repeat("x", 100) + `"}`, strings.Repeat("x", 77) + "…"},
+		{"shell", `{"command":"` + strings.Repeat("x", 100) + `"}`, strings.Repeat("x", 100)},
 	}
 	for _, c := range cases {
 		var input map[string]any
@@ -139,6 +139,20 @@ func TestSummaryInput(t *testing.T) {
 		if got := summaryInput(c.tool, input); got != c.want {
 			t.Errorf("summaryInput(%s, %s)=%q want %q", c.tool, c.input, got, c.want)
 		}
+	}
+}
+
+func TestShortOneLineCapsTitles(t *testing.T) {
+	t.Parallel()
+	long := strings.Repeat("x", 100)
+	if got := shortOneLine(long); got != strings.Repeat("x", 77)+"…" {
+		t.Errorf("shortOneLine cap=%q want 77 runes plus ellipsis", got)
+	}
+	if got := oneLine("a\n  b\tc"); got != "a b c" {
+		t.Errorf("oneLine=%q want %q", got, "a b c")
+	}
+	if got := oneLine(long); got != long {
+		t.Errorf("oneLine length=%d want %d", len([]rune(got)), len([]rune(long)))
 	}
 }
 

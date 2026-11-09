@@ -758,11 +758,11 @@ func (m *model) refreshContent() {
 	case tabActivity:
 		content = activityText(r, rightW)
 	case tabPrompt:
-		content = readTabFile(r, "prompt.txt", "(no prompt.txt)")
+		content = wrapTabContent(readTabFile(r, "prompt.txt", "(no prompt.txt)"), rightW)
 	case tabReport:
-		content = readTabFile(r, "report.md", "(report not ready yet)")
+		content = wrapTabContent(readTabFile(r, "report.md", "(report not ready yet)"), rightW)
 	case tabStderr:
-		content = readTabFile(r, "stderr.log", "(no stderr output)")
+		content = wrapTabContent(readTabFile(r, "stderr.log", "(no stderr output)"), rightW)
 	}
 	m.vp.SetContent(content)
 	if m.follow {
@@ -790,6 +790,14 @@ func readTabFile(r *Run, name, missing string) string {
 	}
 	_ = st
 	return strings.TrimRight(string(b), "\n")
+}
+
+// wrapTabContent wraps tab text to width and keeps its indentation and blank lines.
+func wrapTabContent(s string, width int) string {
+	if width < 1 {
+		width = 1
+	}
+	return ansi.Wrap(strings.ReplaceAll(s, "\t", "    "), width, "")
 }
 
 // summaryLine is the one-line overview above the Activity timeline.
@@ -837,8 +845,11 @@ func activityText(r *Run, width int) string {
 	}
 	var b strings.Builder
 	summary := strings.Join(strings.Fields(summaryLine(r)), " ")
-	b.WriteString(fitDisplayText(summary, width))
-	b.WriteString("\n\n")
+	for _, line := range wrapText(summary, width) {
+		b.WriteString(line)
+		b.WriteString("\n")
+	}
+	b.WriteString("\n")
 	if len(r.Timeline) == 0 {
 		b.WriteString("(no activity yet)")
 		return b.String()
@@ -850,10 +861,19 @@ func activityText(r *Run, width int) string {
 		}
 		switch e.Kind {
 		case "tool":
-			title := fmt.Sprintf("%-8s", shortOneLine(e.Title))
-			line := fmt.Sprintf("%s  %s %s", ts, toolStyle(e.Status).Render(title), e.Summary)
-			b.WriteString(ansi.Truncate(line, width, "…"))
-			b.WriteString("\n")
+			titleW := 8
+			if maxW := width - 11; titleW > maxW {
+				titleW = maxW
+			}
+			if titleW < 1 {
+				titleW = 1
+			}
+			title := fmt.Sprintf("%-*s", titleW, fitDisplayText(shortOneLine(e.Title), titleW))
+			prefix := fmt.Sprintf("%s  %s ", ts, toolStyle(e.Status).Render(title))
+			for _, line := range wrapHanging(prefix, oneLine(e.Summary), width, lipgloss.NewStyle()) {
+				b.WriteString(line)
+				b.WriteString("\n")
+			}
 		case "text":
 			b.WriteString("\n")
 			for _, w := range wrapText(e.Text, width) {
@@ -861,16 +881,50 @@ func activityText(r *Run, width int) string {
 				b.WriteString("\n")
 			}
 		case "finish":
-			line := fmt.Sprintf("%s  step finish  in %d  out %d  cost $%.4f", ts, e.TokensIn, e.TokensOut, e.Cost)
-			b.WriteString(styleDim.Render(ansi.Truncate(line, width, "…")))
-			b.WriteString("\n")
+			prefix := fmt.Sprintf("%s  ", ts)
+			text := fmt.Sprintf("step finish  in %d  out %d  cost $%.4f", e.TokensIn, e.TokensOut, e.Cost)
+			for _, line := range wrapHanging(prefix, text, width, styleDim) {
+				b.WriteString(line)
+				b.WriteString("\n")
+			}
 		case "error":
-			line := fmt.Sprintf("%s  ERROR %s", ts, shortOneLine(e.Message))
-			b.WriteString(styleRed.Render(ansi.Truncate(line, width, "…")))
-			b.WriteString("\n")
+			prefix := fmt.Sprintf("%s  ", ts)
+			text := "ERROR " + oneLine(e.Message)
+			for _, line := range wrapHanging(prefix, text, width, styleRed) {
+				b.WriteString(line)
+				b.WriteString("\n")
+			}
 		}
 	}
 	return b.String()
+}
+
+// wrapHanging wraps text after prefix and indents continuation lines under the text.
+func wrapHanging(prefix, text string, width int, st lipgloss.Style) []string {
+	if width < 1 {
+		width = 1
+	}
+	indent := ansi.StringWidth(prefix)
+	if indent > width-1 {
+		prefix = ansi.Truncate(prefix, width-1, "…")
+		indent = ansi.StringWidth(prefix)
+	}
+	if indent < 0 {
+		indent = 0
+	}
+	lines := wrapText(text, width-indent)
+	if len(lines) == 0 {
+		lines = []string{""}
+	}
+	out := make([]string, 0, len(lines))
+	for i, line := range lines {
+		if i == 0 {
+			out = append(out, prefix+st.Render(line))
+		} else {
+			out = append(out, strings.Repeat(" ", indent)+st.Render(line))
+		}
+	}
+	return out
 }
 
 // wrapText splits plain text into lines of at most width display cells.

@@ -785,3 +785,84 @@ func TestMouseSidebarClickSelectsRun(t *testing.T) {
 		t.Errorf("click outside sidebar selected %q want a", m.selName)
 	}
 }
+
+func TestActivityTextWrapsLongRows(t *testing.T) {
+	t.Parallel()
+	longSummary := "summary " + strings.Repeat("alpha ", 30)
+	longError := "boom " + strings.Repeat("beta ", 30)
+	r := &Run{
+		Name:     "run",
+		Model:    "model",
+		Cwd:      "/tmp/x",
+		Session:  "ses",
+		ToolHist: map[string]int{"bash": 2},
+		Timeline: []Entry{
+			{Kind: "tool", Tool: "bash", Title: "bash", Status: "completed", Summary: longSummary},
+			{Kind: "finish", TokensIn: 1, TokensOut: 2, Cost: 0.5},
+			{Kind: "error", Message: longError},
+		},
+	}
+	for _, width := range []int{20, 34, 60} {
+		t.Run(strconv.Itoa(width), func(t *testing.T) {
+			t.Parallel()
+			out := activityText(r, width)
+			lines := strings.Split(out, "\n")
+			flat := ""
+			for i, line := range lines {
+				if w := ansi.StringWidth(line); w > width {
+					t.Errorf("line %d width=%d want <=%d: %q", i, w, width, line)
+				}
+				flat += ansi.Strip(line) + " "
+			}
+			compact := strings.ReplaceAll(flat, " ", "")
+			for _, word := range []string{"alpha", "beta"} {
+				if !strings.Contains(compact, word) {
+					t.Errorf("%q lost from wrapped output", word)
+				}
+			}
+			// Tool continuation lines hang under the summary after the padded title.
+			hang := strings.Repeat(" ", 19)
+			found := false
+			for _, line := range lines {
+				if strings.HasPrefix(ansi.Strip(line), hang) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("tool summary has no hanging indent")
+			}
+		})
+	}
+}
+
+func TestWrapTabContentFitsWidth(t *testing.T) {
+	t.Parallel()
+	para := strings.Repeat("word ", 30)
+	longWord := strings.Repeat("z", 95)
+	input := "first line\n\n    ab cd\n" + para + "\n" + longWord
+	for _, width := range []int{10, 24, 47} {
+		t.Run(strconv.Itoa(width), func(t *testing.T) {
+			t.Parallel()
+			out := wrapTabContent(input, width)
+			for i, line := range strings.Split(out, "\n") {
+				if w := ansi.StringWidth(line); w > width {
+					t.Errorf("line %d width=%d want <=%d: %q", i, w, width, line)
+				}
+			}
+			if !strings.Contains(out, "first line\n\n") {
+				t.Errorf("blank line not preserved: %q", out)
+			}
+			if !strings.Contains(out, "\n    ab") {
+				t.Errorf("indentation not preserved: %q", out)
+			}
+			flat := strings.Join(strings.Fields(out), " ")
+			if !strings.Contains(flat, strings.Join(strings.Fields(para), " ")) {
+				t.Errorf("paragraph text lost: %q", out)
+			}
+			if got := strings.Count(strings.ReplaceAll(out, "\n", ""), "z"); got != len(longWord) {
+				t.Errorf("long word z count=%d want %d", got, len(longWord))
+			}
+		})
+	}
+}

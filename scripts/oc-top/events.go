@@ -62,16 +62,21 @@ func summaryInput(tool string, input map[string]any) string {
 	for _, k := range summaryKeys {
 		if v, ok := input[k]; ok {
 			if s, ok := v.(string); ok && strings.TrimSpace(s) != "" {
-				return shortOneLine(s)
+				return oneLine(s)
 			}
 		}
 	}
 	return ""
 }
 
+// oneLine flattens whitespace to a single line without capping the length.
+func oneLine(s string) string {
+	return strings.Join(strings.Fields(s), " ")
+}
+
 // shortOneLine flattens whitespace to one line and caps the length.
 func shortOneLine(s string) string {
-	s = strings.Join(strings.Fields(s), " ")
+	s = oneLine(s)
 	if len([]rune(s)) > 80 {
 		runes := []rune(s)
 		s = string(runes[:77]) + "…"
@@ -130,7 +135,7 @@ func parseLine(line string) (Entry, bool) {
 		er := rawError{}
 		_ = json.Unmarshal(raw.Error, &er)
 		e.Kind = "error"
-		e.Message = er.Message
+		e.Message = oneLine(er.Message)
 		if e.Message == "" {
 			e.Message = "unknown error"
 		}
