@@ -33,24 +33,68 @@ REPORT_LINES="${OC_REPORT_LINES:-80}"
 
 mkdir -p "$OC_RUNS"
 
+run_parent() { jq -r '.parent // ""' "$1/meta.json" 2>/dev/null; }
+
+run_active() {
+  [[ -f "$1/pid" ]] || return 1
+  local p; p=$(<"$1/pid")
+  [[ -n $p ]] && kill -0 "$p" 2>/dev/null
+}
+
+hit_usage_limit() {
+  jq -e -s 'any(.[]; (.type != "tool_use" and .type != "text") and (tostring | test("provider.go-limit|GoUsageLimitError")))' "$1" >/dev/null 2>&1
+}
+
 cmd_ps() {
-  local d any=0
-  for d in "$OC_RUNS"/*/; do
-    [[ -f "$d/pid" ]] || continue
-    local pid; pid=$(<"$d/pid")
-    kill -0 "$pid" 2>/dev/null || continue
+  local d any=0 parent_of
+  ps_line() {
+    local dir=$1 level=$2 prefix="" pid idle last nm c
+    (( level > 0 )) && prefix=$(printf '%*s└ ' $(( 4 * level - 2 )) "")
+    nm=$(basename "$dir")
+    pid=$(<"$dir/pid")
+    idle=$(( $(date +%s) - $(stat -c %Y "$dir/events.jsonl" 2>/dev/null || date +%s) ))
+    last=$(jq -r 'select(.type=="tool_use") | .part.tool' "$dir/events.jsonl" 2>/dev/null | tail -1)
+    printf '%s%s  pid=%s  idle=%ss  last_tool=%s\n' "$prefix" "$nm" "$pid" "$idle" "${last:--}"
     any=1
-    local idle=$(( $(date +%s) - $(stat -c %Y "$d/events.jsonl" 2>/dev/null || date +%s) ))
-    local last; last=$(jq -r 'select(.type=="tool_use") | .part.tool' "$d/events.jsonl" 2>/dev/null | tail -1)
-    printf '%s  pid=%s  idle=%ss  last_tool=%s\n' "$(basename "$d")" "$pid" "$idle" "${last:--}"
+    for c in "$OC_RUNS"/*/; do
+      [[ -f "$c/meta.json" ]] || continue
+      [[ "$(run_parent "${c%/}")" == "$nm" ]] || continue
+      run_active "${c%/}" && ps_line "${c%/}" $(( level + 1 ))
+    done
+  }
+  for d in "$OC_RUNS"/*/; do
+    run_active "${d%/}" || continue
+    [[ -f "$d/meta.json" ]] || continue
+    parent_of=$(run_parent "${d%/}")
+    if [[ -z $parent_of ]] || ! run_active "$OC_RUNS/$parent_of"; then
+      ps_line "${d%/}" 0
+    fi
   done
   (( any )) || echo "no active runs"
 }
 
 cmd_kill() {
-  local d="$OC_RUNS/$1"
+  local d="$OC_RUNS/$1" ocpid=""
+  [[ -d "$d" ]] || { echo "no run $1" >&2; exit 1; }
+  # pid is the opencode child; oc.pid is the watchdog, which stops the children on TERM.
+  [[ -f "$d/oc.pid" ]] && ocpid=$(<"$d/oc.pid")
+  if [[ -n $ocpid ]] && kill -0 "$ocpid" 2>/dev/null; then
+    kill "$ocpid" 2>/dev/null && echo "killed $1"
+    return
+  fi
   [[ -f "$d/pid" ]] || { echo "no run $1" >&2; exit 1; }
   kill "$(<"$d/pid")" 2>/dev/null && echo "killed $1"
+}
+
+count_live_children() {
+  local par=$1 d p n=0
+  for d in "$OC_RUNS"/*/; do
+    [[ -f "$d/meta.json" && -f "$d/pid" ]] || continue
+    [[ "$(run_parent "${d%/}")" == "$par" ]] || continue
+    p=$(<"$d/pid")
+    [[ -n $p ]] && kill -0 "$p" 2>/dev/null && n=$((n + 1))
+  done
+  echo "$n"
 }
 
 case "${1:-}" in
@@ -78,6 +122,19 @@ while getopts ":m:s:n:f:w:i:t:c:r" opt; do
   esac
 done
 shift $((OPTIND - 1))
+[[ ${OC_READONLY:-0} == 1 ]] && readonly=1
+
+# Child-run contract: the environment names the parent run and this run's depth.
+parent="${OC_PARENT:-}"
+depth="${OC_DEPTH:-0}"
+max_depth="${OC_MAX_DEPTH:-4}"
+[[ $depth =~ ^[0-9]+$ ]] || depth=0
+[[ $max_depth =~ ^[0-9]+$ ]] || max_depth=4
+
+if (( depth >= max_depth )); then
+  echo "oc: child runs not allowed for this task (depth $depth, max $max_depth)" >&2
+  exit 2
+fi
 
 task="$*"
 [[ -z "$task" && ! -t 0 ]] && task=$(cat)
@@ -88,10 +145,75 @@ dir="$OC_RUNS/$run"
 mkdir -p "$dir"
 wt=""; ((${#worktree[@]})) && wt="${worktree[0]#--worktree=}"
 ro_bool=false; (( readonly )) && ro_bool=true
-jq -n --arg run "$run" --arg name "$name" --arg cwd "$PWD" --arg model "$model" --arg worktree "$wt" --arg session "$session" --argjson readonly "$ro_bool" --argjson idle_limit "$idle_limit" --argjson hard_limit "$hard_limit" --argjson checkpoint "$checkpoint" --argjson started "$(date +%s)" '{run:$run, name:$name, cwd:$cwd, model:$model, readonly:$readonly, worktree:$worktree, session:$session, idle_limit:$idle_limit, hard_limit:$hard_limit, checkpoint:$checkpoint, started:$started}' > "$dir/meta.json"
+jq -n --arg run "$run" --arg name "$name" --arg cwd "$PWD" --arg model "$model" --arg worktree "$wt" --arg session "$session" --arg parent "$parent" --argjson depth "$depth" --argjson readonly "$ro_bool" --argjson idle_limit "$idle_limit" --argjson hard_limit "$hard_limit" --argjson checkpoint "$checkpoint" --argjson started "$(date +%s)" '{run:$run, name:$name, cwd:$cwd, model:$model, readonly:$readonly, worktree:$worktree, session:$session, idle_limit:$idle_limit, hard_limit:$hard_limit, checkpoint:$checkpoint, started:$started, parent:$parent, depth:$depth}' > "$dir/meta.json"
+echo $$ > "$dir/oc.pid"
+
+child_dirs() {
+  local d
+  for d in "$OC_RUNS"/*/; do
+    [[ -f "$d/meta.json" ]] || continue
+    [[ "$(run_parent "${d%/}")" == "$run" ]] && printf '%s\n' "${d%/}"
+  done
+}
+
+live_children() {
+  local d p
+  while read -r d; do
+    [[ -n $d ]] || continue
+    [[ -f "$d/pid" ]] || continue
+    p=$(<"$d/pid")
+    [[ -n $p ]] && kill -0 "$p" 2>/dev/null && printf '%s\n' "$d"
+  done < <(child_dirs)
+}
+
+child_usage_limit() {
+  local d
+  while read -r d; do
+    [[ -n $d && -f "$d/result.json" ]] || continue
+    [[ "$(jq -r '.state // ""' "$d/result.json" 2>/dev/null)" == usage-limit ]] && return 0
+  done < <(child_dirs)
+  return 1
+}
+
+kill_children() {
+  local d p o
+  while read -r d; do
+    [[ -n $d ]] || continue
+    o=""
+    [[ -f "$d/oc.pid" ]] && o=$(<"$d/oc.pid")
+    if [[ -n $o ]] && kill -0 "$o" 2>/dev/null; then
+      kill "$o" 2>/dev/null
+    else
+      p=$(<"$d/pid")
+      [[ -n $p ]] && kill "$p" 2>/dev/null
+    fi
+  done < <(live_children)
+}
+
+terminating=0
+cleanup() { kill_children; rm -f "$dir/oc.pid"; }
+on_signal() { terminating=1; kill_children; [[ -n ${cur_pid:-} ]] && kill "$cur_pid" 2>/dev/null; }
+trap on_signal TERM INT
+trap cleanup EXIT
 
 ro_line=""
 (( readonly )) && ro_line="- Do not edit any files. This is a read-only task."
+
+child_rules=""
+if (( depth + 1 < max_depth )); then
+  child_rules=$(cat <<EOF
+
+Child runs:
+- Start child runs only when the work splits into independent parts with separate files and parallel work makes the task clearly faster. Otherwise do the work yourself.
+- Start each child with 'oc -n <name> "<task>" &', then 'wait'. Children can start their own children under the same rule.
+- Give each child an identity, its exact owned files, steps and checks. Children must not edit the same files.
+- Read each child report. Fix or redo failed parts yourself.
+- If a child exits 5, stop and report usage-limit.
+- Add a line 'CHILDREN: <run names>' to your report.
+EOF
+)
+  (( readonly )) && child_rules+=$'\n- This task is read-only. Start every child with -r.'
+fi
 
 if [[ -z "$session" ]]; then
   prompt="You are the executor. A reviewer plans the work and checks your result.
@@ -101,6 +223,7 @@ Rules:
 - If the task is unclear or blocked, stop and say why. Do not guess.
 - Run the checks that the task names, or the nearest relevant tests.
 $ro_line
+$child_rules
 
 TASK:
 $task
@@ -124,16 +247,19 @@ run_once() {
   : > "$dir/events.jsonl"
   local args=(run -m "$m" --format json "${files[@]}" "${worktree[@]}")
   if [[ -n "$session" ]]; then args+=(-s "$session"); else args+=(--archived --title "oc:$name"); fi
-  opencode "${args[@]}" "$prompt" >> "$dir/events.jsonl" 2> "$dir/stderr.log" &
+  OC_PARENT="$run" OC_DEPTH=$(( depth + 1 )) OC_READONLY="$readonly" \
+    opencode "${args[@]}" "$prompt" >> "$dir/events.jsonl" 2> "$dir/stderr.log" &
   local pid=$!
+  cur_pid=$pid
   echo "$pid" > "$dir/pid"
 
-  local start now last_act sig new_sig svc_m new_svc_m size new_size
+  local start now last_act sig new_sig svc_m new_svc_m size new_size kids
   start=$(date +%s); last_act=$start
   sig=$(tree_sig); svc_m=$(stat -c %Y "$OC_SVC_LOG" 2>/dev/null || echo 0); size=0
   status_hint=""
-  while kill -0 "$pid" 2>/dev/null; do
-    sleep 10
+  while kill -0 "$pid" 2>/dev/null && (( terminating == 0 )); do
+    sleep 10 & wait $! 2>/dev/null
+    (( terminating )) && break
     now=$(date +%s)
     new_size=$(stat -c %s "$dir/events.jsonl")
     new_sig=$(tree_sig)
@@ -141,11 +267,14 @@ run_once() {
     if [[ $new_size != "$size" || $new_sig != "$sig" || $new_svc_m != "$svc_m" ]]; then
       last_act=$now; size=$new_size; sig=$new_sig; svc_m=$new_svc_m
     fi
+    kids=$(count_live_children "$run")
+    if (( kids > 0 )); then last_act=$now; fi
+    if child_usage_limit; then status_hint=usage-limit; break; fi
     if (( now - last_act >= idle_limit )); then status_hint=hung; break; fi
     if (( now - start >= hard_limit )); then status_hint=timeout; break; fi
-    if (( checkpoint > 0 && now - start >= checkpoint )); then status_hint=slow; break; fi
+    if (( checkpoint > 0 && kids == 0 && now - start >= checkpoint )); then status_hint=slow; break; fi
   done
-  if [[ -n $status_hint ]]; then
+  if [[ -n $status_hint || $terminating == 1 ]]; then
     kill "$pid" 2>/dev/null; sleep 2; kill -9 "$pid" 2>/dev/null
   fi
   wait "$pid" 2>/dev/null
@@ -155,7 +284,7 @@ run_once() {
 t0=$(date +%s)
 used_model=$model
 run_once "$model"
-if [[ -z $status_hint ]] && grep -q '"provider.go-limit"\|GoUsageLimitError' "$dir/events.jsonl" \
+if [[ -z $status_hint ]] && (( terminating == 0 )) && hit_usage_limit "$dir/events.jsonl" \
    && [[ $model != "$OC_FALLBACK" && -n $OC_FALLBACK ]]; then
   limit_note="$model hit the OpenCode Go usage limit; this run used $OC_FALLBACK."
   used_model=$OC_FALLBACK
@@ -168,8 +297,9 @@ final=$(jq -rs '[.[] | select(.type=="text") | .part.text] | last // ""' "$dir/e
 err=$(jq -r 'select(.type=="error") | .error.message' "$dir/events.jsonl" 2>/dev/null | tail -1)
 tools=$(jq -r 'select(.type=="tool_use") | .part.tool' "$dir/events.jsonl" 2>/dev/null | sort | uniq -c | awk '{printf "%s×%s ", $2, $1}')
 
-if [[ -n $status_hint ]]; then state=$status_hint
-elif grep -q 'GoUsageLimitError' "$dir/events.jsonl"; then state=usage-limit
+if [[ $terminating == 1 ]]; then state=failed
+elif [[ -n $status_hint ]]; then state=$status_hint
+elif hit_usage_limit "$dir/events.jsonl"; then state=usage-limit
 elif [[ -n $err ]]; then state=failed
 else state=$(grep -oP '^STATUS:\s*\K\w+' <<<"$final" | tail -1); state=${state:-done}
 fi
@@ -178,6 +308,7 @@ fi
   echo "OC RUN $run"
   echo "state=$state model=$used_model time=$(( $(date +%s) - t0 ))s session=${sid:-none}"
   [[ -n ${limit_note:-} ]] && echo "note: $limit_note"
+  [[ $terminating == 1 ]] && echo "note: stopped by signal"
   [[ -n $tools ]] && echo "tools: $tools"
   [[ -n $err ]] && echo "error: $err"
   if git rev-parse --git-dir >/dev/null 2>&1 && [[ ${#worktree[@]} -eq 0 ]]; then

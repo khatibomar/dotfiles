@@ -35,6 +35,7 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 - Run `oc` with the Bash tool and `run_in_background: true`. The harness tells you when it exits. Do not poll. Do not start a Monitor. `oc` has its own hang watchdog.
 - `oc` uses `opencode-go/deepseek-v4.1-flash`. If that model hits the OpenCode Go usage limit, `oc` uses `opencode-go/crouton-alpha-free` and says so in the report.
 - `-r` makes the task read-only.
+- Executors can start nested child runs (up to depth 4, set OC_MAX_DEPTH). They do this only when parallel work makes the task clearly faster. Child runs share the usage limit.
 - `oc` stops a run after 300 s with no events, no OpenCode log activity and no working tree change. For long builds or tests with no output, use `-i 900`.
 - `oc` adds the executor rules and the report format to each prompt. Do not repeat them.
 - Run independent tasks in parallel, one `oc` per task. Do not let two tasks edit the same files. Use `-w` when edits can overlap.
