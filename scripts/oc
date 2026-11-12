@@ -4,6 +4,7 @@
 #   oc [options] "prompt"          start a task (prompt can also come from stdin)
 #   oc -s ses_xxx "feedback"       send a task back for revision in the same session
 #   oc ps                          list runs that are still active
+#   oc wait [run-name...]          wait for runs, then print their reports (no names: all active)
 #   oc kill <run-name>             stop a run
 #   oc log <run-name>              print the full report of a run
 #   oc top                         open the run dashboard (oc-top)
@@ -18,6 +19,7 @@
 #   -t seconds   hard time limit (default 2400)
 #   -c seconds   checkpoint: stop with state slow after this time so the reviewer can help (default 300, 0 = off)
 #   -r           read-only task: add "Do not edit any files" to the prompt
+#   -q           quiet: print one summary line, not the full report
 #
 # Exit codes: 0 done, 1 failed, 2 blocked, 3 hung, 4 timeout, 5 usage limit, 6 slow (checkpoint).
 set -uo pipefail
@@ -86,6 +88,56 @@ cmd_kill() {
   kill "$(<"$d/pid")" 2>/dev/null && echo "killed $1"
 }
 
+run_alive() {
+  local d=$1 p f
+  for f in oc.pid pid; do
+    [[ -f "$d/$f" ]] || continue
+    p=$(<"$d/$f")
+    [[ -n $p ]] && kill -0 "$p" 2>/dev/null && return 0
+  done
+  return 1
+}
+
+cmd_wait() {
+  local -a runs=("$@")
+  local d r
+  if ((${#runs[@]} == 0)); then
+    for _ in 1 2 3 4 5; do
+      for d in "$OC_RUNS"/*/; do
+        [[ -f "$d/meta.json" ]] || continue
+        run_alive "${d%/}" && runs+=("$(basename "${d%/}")")
+      done
+      ((${#runs[@]})) && break
+      sleep 1
+    done
+  fi
+  if ((${#runs[@]} == 0)); then
+    echo "no active runs"
+    return 0
+  fi
+  echo "waiting for ${#runs[@]} run(s)"
+  for r in "${runs[@]}"; do
+    d="$OC_RUNS/$r"
+    if [[ ! -d "$d" ]]; then
+      echo "no run $r" >&2
+      continue
+    fi
+    while [[ ! -f "$d/result.json" ]] && run_alive "$d"; do
+      sleep 2
+    done
+    for _ in 1 2 3 4 5; do
+      [[ -f "$d/result.json" ]] && break
+      sleep 1
+    done
+    if [[ -f "$d/report.md" ]]; then
+      cat "$d/report.md"
+    else
+      echo "no report for $r" >&2
+    fi
+    echo
+  done
+}
+
 count_live_children() {
   local par=$1 d p n=0
   for d in "$OC_RUNS"/*/; do
@@ -99,14 +151,15 @@ count_live_children() {
 
 case "${1:-}" in
   ps) cmd_ps; exit 0 ;;
+  wait) shift; cmd_wait "$@"; exit $? ;;
   kill) cmd_kill "${2:?run name}"; exit 0 ;;
   log) cat "$OC_RUNS/${2:?run name}/report.md"; exit 0 ;;
   top) shift; exec oc-top "$@" ;;
 esac
 
-model="$OC_MODEL" session="" name="task" idle_limit=300 hard_limit=2400 checkpoint=300 readonly=0
+model="$OC_MODEL" session="" name="task" idle_limit=300 hard_limit=2400 checkpoint=300 readonly=0 quiet=0
 files=() worktree=()
-while getopts ":m:s:n:f:w:i:t:c:r" opt; do
+while getopts ":m:s:n:f:w:i:t:c:rq" opt; do
   case $opt in
     m) model=$OPTARG ;;
     s) session=$OPTARG ;;
@@ -117,6 +170,7 @@ while getopts ":m:s:n:f:w:i:t:c:r" opt; do
     t) hard_limit=$OPTARG ;;
     c) checkpoint=$OPTARG ;;
     r) readonly=1 ;;
+    q) quiet=1 ;;
     :) [[ $OPTARG == w ]] && worktree=(--worktree) || { echo "-$OPTARG needs a value" >&2; exit 64; } ;;
     *) echo "unknown option -$OPTARG" >&2; exit 64 ;;
   esac
@@ -335,7 +389,11 @@ fi
 
 
 printf '%s\n' "$final" > "$dir/final.txt"
-cat "$dir/report.md"
+if (( quiet )); then
+  echo "OC RUN $run state=$state report=$dir/report.md"
+else
+  cat "$dir/report.md"
+fi
 
 case $state in
   done) rc=0 ;; blocked) rc=2 ;; hung) rc=3 ;; timeout) rc=4 ;; usage-limit) rc=5 ;; slow) rc=6 ;; *) rc=1 ;;

@@ -31,8 +31,10 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
 
 ## Run a task
 
-- Command: `oc [-r] [-n name] [-i idle] [-t limit] [-c checkpoint] [-w [worktree]] [-f file] "<task>"`.
-- Run `oc` with the Bash tool and `run_in_background: true`. The harness tells you when it exits. Do not poll. Do not start a Monitor. `oc` has its own hang watchdog.
+- Command: `oc [-r] [-q] [-n name] [-i idle] [-t limit] [-c checkpoint] [-w [worktree]] [-f file] "<task>"`.
+- Start `oc` in the background. Do not hold a foreground call open for a long task.
+- Claude: use the Bash tool with `run_in_background: true`. The harness sends one message when the call exits. Do not poll. Do not start a Monitor.
+- Codex: start the tasks with `-q` and `&` in one `exec_command`, then run `oc wait` in the same command. `-q` stops each task from printing its report twice. Wait with one `write_stdin` call: `chars: ""`, `yield_time_ms: 300000`. Set `// @exec: {"yield_time_ms": 300000}` on the `exec` wrapper so it does not yield at 30 s. Never use 1000 or 50000 ms polls.
 - `oc` uses `opencode-go/deepseek-v4.1-flash`. If that model hits the OpenCode Go usage limit, `oc` uses `opencode-go/crouton-alpha-free` and says so in the report.
 - `-r` makes the task read-only.
 - Executors can start nested child runs (up to depth 4, set OC_MAX_DEPTH). They do this only when parallel work makes the task clearly faster. Child runs share the usage limit.
@@ -44,7 +46,18 @@ You drive. OpenCode executes and reports back. You review and approve or send ba
   - Executors cannot talk to each other. You coordinate: define shared interfaces first, then start the tasks.
   - When one task needs the output of another, run them in sequence. Do not split a hot file (one file that most changes touch) across tasks.
   - With `-w`, you merge the worktrees and fix conflicts after review.
-- `oc ps` lists active runs. `oc kill <run>` stops one. `oc log <run>` prints a full report.
+- `oc ps` lists active runs. `oc wait [run...]` waits for runs and prints their reports. `oc kill <run>` stops one. `oc log <run>` prints a full report.
+
+## Cost control
+
+The orchestrator context is the main cost. Keep it small.
+
+- Do not cat or tail the `oc` task output file after `oc` prints the report. Use `oc log <run>` only when the report says it was truncated.
+- Start review with `git diff --stat`. Read only the changed files and hunks that need review. Do not read generated files, lockfiles or large documents.
+- Do not read the same file or diff twice in one turn. Reuse the earlier output.
+- Use `-c 0` for tasks that you know take longer than 5 minutes. A checkpoint adds a report, a review and a resume.
+- Wait for parallel runs with one `oc wait` call, not one wait per run.
+- Check `oc ps` once per phase, not on a timer.
 
 ## Write a task
 

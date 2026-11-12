@@ -126,6 +126,24 @@ if [ -f "$CONFIG_DIR/AI_RULES.md" ]; then
 	CLAUDE_CONFIG_DIR="$HOME/.claude"
 	mkdir -p "$CLAUDE_CONFIG_DIR"
 	ln -sf "$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" "$CLAUDE_CONFIG_DIR/CLAUDE.md"
+
+	# Codex reads CODEX_HOME/AGENTS.md. Keep local rules and add a pointer to the shared file.
+	CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+	CODEX_AGENTS="$CODEX_DIR/AGENTS.md"
+	mkdir -p "$CODEX_DIR"
+	if [ -e "$CODEX_AGENTS" ]; then
+		if ! grep -qF "$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" "$CODEX_AGENTS"; then
+			printf '\n# Shared AI rules\n\nRead %s at the start of every session and follow it.\n' \
+				"$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" >>"$CODEX_AGENTS"
+			echo "Appended shared AI rules pointer to $CODEX_AGENTS"
+		fi
+	else
+		ln -sf "$DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md" "$CODEX_AGENTS"
+		echo "Linked $CODEX_AGENTS to $DOTFILES_DIR/$CONFIG_DIR/AI_RULES.md"
+	fi
+	if [ -e "$CODEX_DIR/AGENTS.override.md" ]; then
+		echo "WARNING: $CODEX_DIR/AGENTS.override.md takes precedence over AGENTS.md; add the shared AI rules pointer there"
+	fi
 else
 	echo "No AI_RULES.md found. Skipping."
 fi
