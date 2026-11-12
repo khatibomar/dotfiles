@@ -1,16 +1,32 @@
 #!/bin/bash
 
-# Auto-append the commit template when using 'git commit -m'
-if [ "$2" = "message" ]; then
+# Append the commit template body on 'git commit -m/-F', then add one
+# Signed-off-by trailer for the committer identity of this repository.
+
+MSG_FILE="$1"
+SOURCE="$2"
+
+if [ "$SOURCE" = "message" ]; then
   TEMPLATE=$(git config commit.template)
   if [ -n "$TEMPLATE" ]; then
-    # Expand ~ to $HOME
     TEMPLATE="${TEMPLATE/#\~/$HOME}"
     if [ -f "$TEMPLATE" ]; then
       COMMENT_CHAR=$(git config core.commentChar || echo "#")
-      echo "" >> "$1"
-      # Append the template but ignore commented lines
-      grep -v "^${COMMENT_CHAR}" "$TEMPLATE" >> "$1"
+      BODY=$(grep -v "^${COMMENT_CHAR}" "$TEMPLATE" | grep -iv '^signed-off-by:' | sed -e '/^[[:space:]]*$/d')
+      if [ -n "$BODY" ]; then
+        printf '\n%s\n' "$BODY" >> "$MSG_FILE"
+      fi
     fi
   fi
 fi
+
+# Sign only new commits, not amends, merges or picks of other commits.
+case "$SOURCE" in
+  "" | message | template) ;;
+  *) exit 0 ;;
+esac
+
+# Same identity as 'git commit -s', so the two never differ.
+IDENT=$(git var GIT_COMMITTER_IDENT | sed -e 's/>.*/>/')
+git interpret-trailers --in-place --if-exists addIfDifferent \
+  --trailer "Signed-off-by: $IDENT" "$MSG_FILE"

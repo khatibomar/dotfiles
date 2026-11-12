@@ -41,3 +41,14 @@ awk '
     for (i = 1; i <= NR; i++) print lines[i]
   }
 ' "$COMMIT_MSG_FILE" > "$COMMIT_MSG_FILE.tmp" && mv "$COMMIT_MSG_FILE.tmp" "$COMMIT_MSG_FILE"
+
+# Drop repeated Signed-off-by lines; keep the first one for each email.
+awk '
+  tolower($0) ~ /^signed-off-by:/ {
+    email = tolower($0)
+    sub(/^[^<]*</, "", email)
+    sub(/>.*$/, "", email)
+    if (seen[email]++) next
+  }
+  { print }
+' "$COMMIT_MSG_FILE" > "$COMMIT_MSG_FILE.tmp" && mv "$COMMIT_MSG_FILE.tmp" "$COMMIT_MSG_FILE"

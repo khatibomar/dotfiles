@@ -3,5 +3,3 @@
 # Explain what and why, not how
 # - Bullet points if needed
 # - Reference issues/tickets
-
-Signed-off-by: ayn <ayn.khatib@gmail.com>
