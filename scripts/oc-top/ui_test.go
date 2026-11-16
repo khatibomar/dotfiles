@@ -866,3 +866,37 @@ func TestWrapTabContentFitsWidth(t *testing.T) {
 		})
 	}
 }
+
+func TestDetailTabsWrapAfterResize(t *testing.T) {
+	t.Parallel()
+	for _, tab := range []int{tabActivity, tabPrompt, tabReport, tabStderr} {
+		t.Run(strconv.Itoa(tab), func(t *testing.T) {
+			t.Parallel()
+			dir := t.TempDir()
+			runDir := filepath.Join(dir, "resize-20261108-120000-1")
+			text := strings.Repeat("wrapped content ", 200) + "ENDMARK"
+			for _, name := range []string{"prompt.txt", "report.md", "stderr.log"} {
+				writeFile(t, filepath.Join(runDir, name), text)
+			}
+			m := newModel(dir, filterAll)
+			m.runs[0].Timeline = []Entry{{Kind: "text", Text: text}}
+			m.tab = tab
+			for _, size := range []tea.WindowSizeMsg{{Width: 100, Height: 20}, {Width: 100, Height: 25}, {Width: 70, Height: 25}} {
+				next, _ := m.Update(size)
+				m = derefModel(next)
+				view := ansi.Strip(m.vp.View())
+				if !strings.Contains(view, "ENDMARK") {
+					t.Fatalf("size %v lost wrapped text: %q", size, view)
+				}
+				for line := range strings.SplitSeq(view, "\n") {
+					if ansi.StringWidth(line) > m.vp.Width {
+						t.Fatalf("line exceeds pane width: %q", line)
+					}
+				}
+				if m.vp.TotalLineCount() <= m.vp.Height || !m.vp.AtBottom() {
+					t.Fatalf("wrapped content must scroll and follow the bottom")
+				}
+			}
+		})
+	}
+}

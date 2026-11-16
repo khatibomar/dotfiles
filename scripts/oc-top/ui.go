@@ -725,6 +725,7 @@ func (m *model) resizeViewport() {
 	if rightW < 10 {
 		rightW = 10
 	}
+	m.builtWidth = -1
 	m.vp = viewport.New(rightW, h)
 	m.vp.MouseWheelEnabled = true
 	m.vp.MouseWheelDelta = 3

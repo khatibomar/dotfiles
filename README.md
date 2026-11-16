@@ -78,6 +78,11 @@ and [KWallet Secret Service](https://github.com/KDE/kwallet).
 
 ## oc dashboard
 
-`oc top` opens the oc-top executor dashboard. In Claude Code, `/oc-agents` runs
-`oc-top-launch`. Each `oc` run writes `meta.json` (start metadata) and
+`oc top` opens the oc-top executor dashboard. `/oc-agents` opens it from Claude
+Code and OpenCode. In Codex, select the `oc-agents` skill (or use `$oc-agents`).
+Run `bash scripts/install_oc_commands.sh` to install the Codex and OpenCode entries.
+Claude, Codex, and OpenCode can start executor runs with `oc`; child runs appear
+in the same dashboard. Detail tabs wrap text to the pane width.
+After source updates, run `make -C scripts/oc-top install` and reopen the dashboard.
+Each `oc` run writes `meta.json` (start metadata) and
 `result.json` (final state) into its run directory.

@@ -13,7 +13,11 @@
 - Comments that describing a complex algorithm or complex code can use many comments lines.
 - Do not leave comments about debugging steps, approaches tried, or things that did not work; remove such comments before finishing
 
-# Claude Orchestrator & OpenCode Executor
+# Agent Orchestrators & OpenCode Executors
+
+Claude, Codex, and OpenCode can act as the orchestrator and start OpenCode executors through `oc`.
+OpenCode orchestrators can start child runs too; use `oc` so the dashboard can track them.
+The Claude-specific role rules below apply when Claude is the orchestrator.
 
 Claude usage costs more than OpenCode Go. Keep Claude usage low.
 You drive. OpenCode executes and reports back. You review and approve or send back for revision. No exceptions.

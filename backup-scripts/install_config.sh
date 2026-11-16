@@ -11,7 +11,7 @@ BACKUP_DIR="$HOME/.config-backup-$current_date"
 mkdir -p "$BACKUP_DIR"
 
 # Define an exclusion list for the general config files
-EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md" "kdiff3rc" "plasma" "fcitx5" "plasma-workspace" "gnupg")
+EXCLUDED_FILES=("htoprc" "mpv.conf" "konsole" "konsolerc" "AI_RULES.md" "kdiff3rc" "plasma" "fcitx5" "plasma-workspace" "gnupg" "skills" "opencode")
 
 # Backup and copy general config files
 if [ -d "$CONFIG_DIR" ]; then
@@ -57,6 +57,8 @@ else
 	echo "Error: Config directory $CONFIG_DIR does not exist."
 	exit 1
 fi
+
+bash "$(dirname -- "${BASH_SOURCE[0]}")/../scripts/install_oc_commands.sh"
 
 # Handle htoprc separately
 if [ -f "$CONFIG_DIR/htoprc" ]; then

@@ -391,11 +391,12 @@ install_opencode() {
 	deploy_oc_bridge
 }
 
-# Links scripts/oc into ~/.local/bin. Claude uses oc to send executor tasks to OpenCode.
+# Link the executor bridge and dashboard commands for all orchestrators.
 deploy_oc_bridge() {
 	local repo_dir
 	repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
 	local target="$HOME/.local/bin/oc"
+	bash "$repo_dir/scripts/install_oc_commands.sh"
 
 	for dep in jq git; do
 		command_exists "$dep" || print_warning "$dep not found; oc needs it"
