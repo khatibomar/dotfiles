@@ -45,9 +45,7 @@ base=""
 
 now=$(date +%s)
 
-# Print "(↺ Xd Xh Xm)" / "(↺ Xh Xm)" / "(↺ Xm)" for epoch-seconds arg:
-# countdown with minute precision, no seconds. ↺ is the plain unicode
-# (non-emoji) equivalent of 🔄, so it blends with terminal text.
+# Show reset time in seconds below one minute, otherwise in minutes.
 reset_hint() {
     resets_at=$(printf '%.0f' "$1" 2>/dev/null)
     [ -n "$resets_at" ] || return
@@ -60,8 +58,10 @@ reset_hint() {
         printf '(↺ %dd %dh %dm)' "$days" "$hrs" "$mins"
     elif [ "$hrs" -ge 1 ]; then
         printf '(↺ %dh %dm)' "$hrs" "$mins"
-    else
+    elif [ "$mins" -ge 1 ]; then
         printf '(↺ %dm)' "$mins"
+    else
+        printf '(↺ %ds)' "$diff"
     fi
 }
 
