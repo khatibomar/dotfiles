@@ -1,5 +1,6 @@
 # Global AI Rules
 
+- Never write temporary files, worktrees, venvs or downloads to /tmp: it is a small RAM disk and filling it crashes the machine. Use `~/.cache/agent-tmp` (already set as TMPDIR) and delete what you create when done.
 - Do not launch Claude sub-agents (the Agent tool) or Claude background agents. One Claude agent per session.
 - Send executor work to OpenCode through `oc`. See `Claude Orchestrator & OpenCode Executor`.
 - If ultracode is on, use the highest model as orchestrator and cheap models for executors.
