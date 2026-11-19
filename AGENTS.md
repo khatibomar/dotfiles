@@ -25,6 +25,8 @@ Personal dotfiles for Linux/macOS. This is not a buildable project — configs a
 | `scripts/oc` | `~/.local/bin/oc` (link) | Claude-to-OpenCode executor bridge; linked by `scripts/install_ai_tools.sh` (option 4) |
 | `keys/*` | `~/.ssh/` / GPG keyring | Sensitive — only placeholders in repo |
 | `wallpapers/` | `~/.local/share/wallpapers/` | Set via `plasma-apply-wallpaperimage` |
+| `config/AI_RULES.md` | `~/.claude/CLAUDE.md`, `~/.gemini/rules/global.md` (links) | Shared rules for every machine; linked by `install_config.sh` |
+| `config/AI_RULES_OPENCODE.md` | `~/.claude/rules/opencode.md` (link) | OpenCode executor rules; linked only by `scripts/install_ai_tools.sh` (option 4), so work machines without OpenCode skip them |
 | `config/claude/*` | `~/.claude/` | Deployed by `scripts/install_ai_tools.sh` (option 1); won't overwrite an existing `settings.json` -- job-specific settings stay local, never committed |
 | `config/AI_RULES.md` | `~/.gemini/rules/global.md`, `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md` | Linked by `backup-scripts/install_config.sh`; Codex instead gets a pointer line when `AGENTS.md` already has local rules |
 

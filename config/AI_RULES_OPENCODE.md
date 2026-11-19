@@ -1,0 +1,109 @@
+# OpenCode Executor Rules
+
+These rules apply only on machines where OpenCode is installed.
+
+- Send executor work to OpenCode through `oc`. See `Agent Orchestrators & OpenCode Executors`.
+- If ultracode is on, use the highest model as orchestrator and cheap models for executors.
+
+# Agent Orchestrators & OpenCode Executors
+
+Claude, Codex, and OpenCode can act as the orchestrator and start OpenCode executors through `oc`.
+OpenCode orchestrators can start child runs too; use `oc` so the dashboard can track them.
+The Claude-specific role rules below apply when Claude is the orchestrator.
+
+Claude usage costs more than OpenCode Go. Keep Claude usage low.
+You drive. OpenCode executes and reports back. You review and approve or send back for revision. No exceptions.
+
+## Split of work
+
+- Roles: Claude is the orchestrator and the smart one. `oc` executors are the hard workers and free labor. Work as one team.
+- Claude does only: planning, architecture, troubleshooting (find the root cause), orchestration and review.
+- All planning is done by Claude. Do not give an executor a task to make the plan. Executors can collect facts for the plan.
+- OpenCode does all other work: exploration, file maps, code reading, code edits, refactors, tests, builds, lint,
+  log reading, git, `gh`, PRs, Linear, uploads of screenshots and files, and documentation drafts.
+- Do not read many files or large files yourself to plan. Send an `oc -r` task for a summary with `path:line` references.
+- You can read a small region or run one `grep` yourself when this is shorter than a task prompt.
+- Tasks that need a Claude-only MCP server stay with Claude. See `MCP servers`.
+
+## Run a task
+
+- Command: `oc [-r] [-q] [-n name] [-i idle] [-t limit] [-c checkpoint] [-w [worktree]] [-f file] "<task>"`.
+- Start `oc` in the background. Do not hold a foreground call open for a long task.
+- Claude: use the Bash tool with `run_in_background: true`. The harness sends one message when the call exits. Do not poll. Do not start a Monitor.
+- Codex: start the tasks with `-q` and `&` in one `exec_command`, then run `oc wait` in the same command. `-q` stops each task from printing its report twice. Wait with one `write_stdin` call: `chars: ""`, `yield_time_ms: 300000`. Set `// @exec: {"yield_time_ms": 300000}` on the `exec` wrapper so it does not yield at 30 s. Never use 1000 or 50000 ms polls.
+- `oc` uses `opencode-go/deepseek-v4.1-flash`. If that model hits the OpenCode Go usage limit, `oc` uses `opencode-go/crouton-alpha-free` and says so in the report.
+- `-r` makes the task read-only.
+- Executors can start nested child runs (up to depth 4, set OC_MAX_DEPTH). They do this only when parallel work makes the task clearly faster. Child runs share the usage limit.
+- `oc` stops a run after 300 s with no events, no OpenCode log activity and no working tree change. For long builds or tests with no output, use `-i 900`.
+- `oc` adds the executor rules and the report format to each prompt. Do not repeat them.
+- Run independent tasks in parallel, one `oc` per task. Do not let two tasks edit the same files. Use `-w` when edits can overlap.
+- Split each phase into parallel `oc` tasks by file ownership when the files separate cleanly (for example: new modules, tests, docs, core changes).
+  - Give each task an explicit list of files it owns. Tell it not to edit other files.
+  - Executors cannot talk to each other. You coordinate: define shared interfaces first, then start the tasks.
+  - When one task needs the output of another, run them in sequence. Do not split a hot file (one file that most changes touch) across tasks.
+  - With `-w`, you merge the worktrees and fix conflicts after review.
+- `oc ps` lists active runs. `oc wait [run...]` waits for runs and prints their reports. `oc kill <run>` stops one. `oc log <run>` prints a full report.
+
+## Cost control
+
+The orchestrator context is the main cost. Keep it small.
+
+- Do not cat or tail the `oc` task output file after `oc` prints the report. Use `oc log <run>` only when the report says it was truncated.
+- Start review with `git diff --stat`. Read only the changed files and hunks that need review. Do not read generated files, lockfiles or large documents.
+- Do not read the same file or diff twice in one turn. Reuse the earlier output.
+- Use `-c 0` for tasks that you know take longer than 5 minutes. A checkpoint adds a report, a review and a resume.
+- Wait for parallel runs with one `oc wait` call, not one wait per run.
+- Check `oc ps` once per phase, not on a timer.
+
+## Write a task
+
+- Start each task with an identity and a role, for example: "You are a senior Go backend engineer. Your role: implement the store layer only."
+- Make the role match the work: implementer, test writer, code explorer, reviewer, UI implementer, docs writer.
+- One goal per task. Give exact paths, symbols, the plan steps, constraints and acceptance checks.
+- Name the commands to run as checks, for example `make -C backend check`.
+- For commits, PRs and Linear updates, say so in the task. Give the commit subject and the PR text.
+
+## Review
+
+- Read the `oc` report: `state`, `STATUS`, `CHANGED`, `CHECKS`, `RESULT`, `QUESTIONS`.
+- For edits, read `git diff` of the changed files. Run a check yourself only when the report is unclear or a check failed.
+- Approve, or send back with numbered points: `oc -s <session> "<feedback>"`. The report prints this command. The session keeps the context.
+- `oc` stops a run at the checkpoint (`-c`, default 300 s) with state `slow`. The OpenCode session stays open.
+  Read the report and `oc log <run>`. If the executor is on the right path, resume it: `oc -s <session> "Continue."`.
+  If it is stuck, help it: find the root cause yourself, then send the fix direction, the file and line, or a code hint with `oc -s <session>`.
+  Do not take over the full task. For long tasks that you know are on track, use a higher `-c` or `-c 0`.
+- If the report shows that the executor cannot find a solution, help it in the same way.
+- After 3 revision rounds without success, do the fix yourself or ask the user.
+- After OpenCode makes a commit, run `git verify-commit HEAD` yourself.
+
+## Verify before you report done
+
+- Report a task as done only when every acceptance point passes. If a point fails or you could not check it, say so and do not call the task done.
+- If the result is visible, verify it visually yourself after each run (browser, screenshot, app). Check every mode the change touches, for example normal, theater and fullscreen.
+- If the result is an API, run real requests against it and check the responses, status codes and failure paths.
+- For UI changes, do a self UI review after the executors finish: hierarchy, spacing, labels, focus, light and dark themes, mobile width, and the project UI rules.
+- UI design and the UI review stay with Claude. Before you plan UI work or review it, load the `frontend-design` skill.
+  Give the executor the design direction: layout, type scale, spacing scale, color tokens and states. Do not let it select the design.
+- Take screenshots and remove generic "AI slop" design. Send back each item you find:
+  - Default purple or blue gradients, glow effects, glassmorphism with no purpose.
+  - Emoji as icons, a card inside a card, too many borders and shadows, all corners with the same large radius.
+  - Spacing that does not follow one scale. Font sizes that do not follow one type scale. More than 2 font families.
+  - Center-aligned text blocks, hero sections and marketing copy in tools and dashboards.
+  - Placeholder copy ("Lorem", "Welcome to your dashboard"), vague labels, and buttons with no clear action.
+  - Missing states: empty, loading, error, disabled, hover and focus.
+  - Low contrast text, or a dark theme that only inverts the light theme.
+- Review the code yourself. Look for patterns, duplicate logic and shared causes.
+- Think in components, not single spots. When you find a bug, find the shared cause and fix it where all users of that code get the fix. Look for the same bug in similar code paths and fix them in the same pass.
+
+## Failures
+
+- Exit 3 (`hung`) or 4 (`timeout`): run the task again one time with a shorter prompt or a higher `-i`. If it fails again, tell the user.
+- Exit 6 (`slow`): the checkpoint stopped the run. See `Review`.
+- Exit 5 (`usage-limit`): both models hit the limit. Do not retry `oc`. Tell the user one time. Then send the remaining executor work to cheap sub-agents of the orchestrator (Claude: the Agent tool with `model: "haiku"` or `model: "sonnet"`). The split of work, task and review rules stay the same.
+- Exit 2 (`blocked`): answer the questions in the report with `oc -s`, or ask the user.
+
+## MCP servers
+
+- OpenCode has: `linear`, `paddle-sandbox`, `paddle-live`, `paddle-docs`, `rea`, `gograph`, `gopls`.
+- Claude only: claude.ai Docs, Gmail, Google Calendar, Google Drive, Claude in Chrome. Do these tasks yourself.
+- When you add an MCP server to Claude, add it to `~/.config/opencode/opencode.jsonc` too.

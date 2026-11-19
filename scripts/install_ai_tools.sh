@@ -389,6 +389,18 @@ install_opencode() {
 	local script_dir="$(dirname "$0")"
 	bash "$script_dir/install_opencode.sh"
 	deploy_oc_bridge
+	deploy_opencode_rules
+}
+
+# Links the OpenCode executor rules into ~/.claude/rules so only machines with OpenCode load them.
+deploy_opencode_rules() {
+	local repo_dir
+	repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+	local target="$HOME/.claude/rules/opencode.md"
+
+	mkdir -p "$HOME/.claude/rules"
+	ln -sfn "$repo_dir/config/AI_RULES_OPENCODE.md" "$target"
+	print_success "Linked $target to $repo_dir/config/AI_RULES_OPENCODE.md"
 }
 
 # Link the executor bridge and dashboard commands for all orchestrators.
